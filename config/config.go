@@ -17,15 +17,8 @@
 
 package config
 
-import "github.com/ethereum/go-ethereum/common"
-
 type Config struct {
-	ChainID     uint64
-	MainAccount *Account
-	NodeList    []string
-}
-
-type Account struct {
-	Address common.Address
-	NodeKey string
+	ChainID       uint64
+	MasterNodeKey string
+	NodeList      []string
 }

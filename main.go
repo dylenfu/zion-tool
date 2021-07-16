@@ -5,8 +5,8 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/dylenfu/zion-tool/flag"
 	"github.com/dylenfu/zion-tool/journal"
-	"github.com/dylenfu/zion-tool/utils/files"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/urfave/cli"
 )
@@ -16,6 +16,12 @@ var (
 		Name:   "tps",
 		Usage:  "try to test zion consensus tps.",
 		Action: journal.HandleTPS,
+		Flags: []cli.Flag{
+			flag.ConfigPathFlag,
+			flag.NumberFlag,
+			flag.TxPerPeriod,
+			flag.PeriodFlag,
+		},
 	}
 )
 
@@ -24,7 +30,12 @@ func setupApp() *cli.App {
 	app.Usage = "hotstuff test tool"
 	app.Version = "1.0.0"
 	app.Copyright = "Copyright in 2021 The Ontology Authors"
-	app.Flags = []cli.Flag{}
+	app.Flags = []cli.Flag{
+		flag.ConfigPathFlag,
+		flag.NumberFlag,
+		flag.TxPerPeriod,
+		flag.PeriodFlag,
+	}
 	app.Commands = []cli.Command{
 		CmdTPS,
 	}
@@ -34,9 +45,7 @@ func setupApp() *cli.App {
 }
 
 func main() {
-
 	app := setupApp()
-
 	if err := app.Run(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -46,6 +55,7 @@ func main() {
 // action execute after commands
 func beforeCommands(ctx *cli.Context) (err error) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	journal.Init()
 	return nil
 }
 

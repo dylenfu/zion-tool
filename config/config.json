@@ -1,9 +1,6 @@
 {
   "ChainID": 102,
-  "MainAccount": {
-    "Address": "",
-    "NodeKey": ""
-  },
+  "MasterNodeKey": "cc69b13ca2c5cd4d76bb881f6ad18d93bd947042c0f3a7adc80bdd17dac68210",
   "NodeList": [
     "http://172.168.3.131:22000",
     "http://172.168.3.132:22000",

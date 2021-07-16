@@ -117,6 +117,18 @@ func (c *Account) SendTx(signedTx *types.Transaction) error {
 	return c.client.SendTransaction(context.Background(), signedTx)
 }
 
+func (c *Account) CurrentBlockNumber() (uint64, error) {
+	return c.client.BlockNumber(context.Background())
+}
+
+func (c *Account) BlockHeaderByNumber(blockNumber uint64) (*types.Header, error) {
+	return c.client.HeaderByNumber(context.Background(), new(big.Int).SetUint64(blockNumber))
+}
+
+func (c *Account) TxNum(blockHash common.Hash) (uint, error) {
+	return c.client.TransactionCount(context.Background(), blockHash)
+}
+
 func DefaultGasPrice() *big.Int {
 	return gasPrice
 }

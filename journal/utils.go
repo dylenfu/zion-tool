@@ -38,7 +38,7 @@ func getInstanceNumber(ctx *cli.Context) int {
 }
 
 func generateMasterAccount(c *config.Config) (*sdk.Account, error) {
-	masterPK, err := crypto.HexToECDSA(c.MainAccount.NodeKey)
+	masterPK, err := crypto.HexToECDSA(c.MasterNodeKey)
 	if err != nil {
 		return nil, fmt.Errorf("get main node key failed, err: %v", err)
 	}
@@ -59,6 +59,8 @@ func generateMultiTestingAccounts(c *config.Config, num int) ([]*sdk.Account, er
 }
 
 func prepareTestingAccountsBalance(master *sdk.Account, accounts []*sdk.Account, instanceNum, period, txn int) error {
+	//logger := orlogger.New("prepare balance", "master", master.Address().Hex())
+
 	amount := totalAmount(period, txn)
 	gas := totalGas(period, txn)
 	total := math.SafeAdd(amount, gas)
@@ -70,22 +72,71 @@ func prepareTestingAccountsBalance(master *sdk.Account, accounts []*sdk.Account,
 
 	time.Sleep(5 * time.Second)
 
-	for idx := 0; idx < int(instanceNum); idx++ {
-		balance, err := accounts[idx].Balance(nil)
+	for idx := 0; idx < instanceNum; idx++ {
+		account := accounts[idx]
+		balance, err := account.Balance(nil)
 		if err != nil {
 			return err
 		}
-		if balance.Cmp(total) < 0 {
-			return fmt.Errorf("%s balance not engough", accounts[idx].Address().Hex())
-		}
+		fmt.Println("deposit for account", "address", account.Address().Hex(), "balance", math.PrintUT(balance))
+		time.Sleep(10 * time.Second)
+		//if balance.Cmp(total) < 0 {
+		//	return fmt.Errorf("%s balance not engough", account.Address().Hex())
+		//} else {
+		//
+		//}
 	}
 
 	return nil
 }
 
+func calculateTPS(master *sdk.Account, period int)  {
+	//logger := orlogger.New("calculate tps", "period", period)
+
+	startBlockNo, err := master.CurrentBlockNumber()
+	if err != nil {
+		panic(fmt.Sprintf("try to get start block number failed, err: %v", err))
+	} else {
+		fmt.Println("start from block", startBlockNo)
+	}
+
+	cnt := 0
+	totalTx := uint(0)
+	curBlockNum := startBlockNo
+	startTime, endTime := uint64(0), uint64(0)
+	for cnt < period {
+		retryHeader:
+		header, err := master.BlockHeaderByNumber(curBlockNum)
+		if err != nil {
+			time.Sleep(500 * time.Millisecond)
+			goto retryHeader
+		}
+		if curBlockNum == startBlockNo {
+			startTime = header.Time
+		}
+		endTime = header.Time
+
+		retryTxCnt:
+		txn, err := master.TxNum(header.Hash())
+		if err != nil {
+			time.Sleep(500 * time.Millisecond)
+			goto retryTxCnt
+		}
+		totalTx += txn
+
+		if endTime > startTime {
+			tps := totalTx / uint((endTime - startTime))
+			fmt.Println("calculate tps", "startBlock", startBlockNo, "endBlock", curBlockNum, "start time", startTime, "end time", endTime, "total tx", totalTx, "tps", tps)
+		}
+
+		curBlockNum += 1
+		cnt += 1
+	}
+}
+
 var (
 	amountPerTx = big.NewInt(100000000000000) // 0.0001 eth
-	extraGas = math.SafeMul(big.NewInt(1), ETH1)
+	extraGas    = math.SafeMul(big.NewInt(1), ETH1)
 )
 
 func totalTx(periodCnt, txPerPeriod int) *big.Int {
