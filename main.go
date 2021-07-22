@@ -21,6 +21,7 @@ var (
 			flag.NumberFlag,
 			flag.TxPerPeriod,
 			flag.PeriodFlag,
+			flag.IncrGasPrice,
 		},
 	}
 )
@@ -35,6 +36,7 @@ func setupApp() *cli.App {
 		flag.NumberFlag,
 		flag.TxPerPeriod,
 		flag.PeriodFlag,
+		flag.IncrGasPrice,
 	}
 	app.Commands = []cli.Command{
 		CmdTPS,

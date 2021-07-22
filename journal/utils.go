@@ -33,6 +33,13 @@ func getPeriodAndTxn(ctx *cli.Context) (int, int, error) {
 	return period, txn, nil
 }
 
+func setGasPriceIncr(ctx *cli.Context) {
+	incr := flag.Flag2Uint64(ctx, flag.IncrGasPrice)
+	if incr > 0 {
+		sdk.AddGasPrice(incr)
+	}
+}
+
 func getInstanceNumber(ctx *cli.Context) int {
 	return int(flag.Flag2Uint64(ctx, flag.NumberFlag))
 }

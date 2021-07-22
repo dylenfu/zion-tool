@@ -44,4 +44,10 @@ var (
 		Usage: "set tx number per period",
 		Value: 10,
 	}
+
+	IncrGasPrice = cli.Uint64Flag{
+		Name:  "inc",
+		Usage: "gas price increase n wei",
+		Value: 0,
+	}
 )

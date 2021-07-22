@@ -129,6 +129,11 @@ func (c *Account) TxNum(blockHash common.Hash) (uint, error) {
 	return c.client.TransactionCount(context.Background(), blockHash)
 }
 
+func AddGasPrice(inc uint64) {
+	added := new(big.Int).SetUint64(inc)
+	gasPrice = new(big.Int).Add(gasPrice, added)
+}
+
 func DefaultGasPrice() *big.Int {
 	return gasPrice
 }
