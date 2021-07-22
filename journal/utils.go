@@ -64,32 +64,39 @@ func prepareTestingAccountsBalance(master *sdk.Account, accounts []*sdk.Account,
 	amount := totalAmount(period, txn)
 	gas := totalGas(period, txn)
 	total := math.SafeAdd(amount, gas)
+	balanceMap := make(map[string]*sdk.Account)
 	for idx := 0; idx < len(accounts); idx++ {
-		if _, err := master.Transfer(accounts[idx].Address(), total); err != nil {
+		addr := accounts[idx].Address()
+		if _, err := master.Transfer(addr, total); err != nil {
 			return err
 		}
+		balanceMap[addr.Hex()] = accounts[idx]
 	}
 
 	time.Sleep(5 * time.Second)
 
-	for idx := 0; idx < instanceNum; idx++ {
-		account := accounts[idx]
+retry:
+	for addr, account := range balanceMap {
 		balance, err := account.Balance(nil)
 		if err != nil {
 			return err
 		}
-		if balance.Cmp(total) < 0 {
-			time.Sleep(10 * time.Second)
-			fmt.Printf("account index %d address %s balance not engough\r\n", idx, account.Address().Hex())
-		} else {
+		if balance.Cmp(total) >= 0 {
 			fmt.Println("deposit for account", "address", account.Address().Hex(), "balance", math.PrintUT(balance))
+			delete(balanceMap, addr)
 		}
+	}
+
+	if len(balanceMap) > 0 {
+		time.Sleep(5 * time.Second)
+		fmt.Printf("there are %d account need to preparing\r\n", len(balanceMap))
+		goto retry
 	}
 
 	return nil
 }
 
-func calculateTPS(master *sdk.Account, period int)  {
+func calculateTPS(master *sdk.Account, period int) {
 	//logger := orlogger.New("calculate tps", "period", period)
 
 	startBlockNo, err := master.CurrentBlockNumber()
@@ -104,7 +111,7 @@ func calculateTPS(master *sdk.Account, period int)  {
 	curBlockNum := startBlockNo
 	startTime, endTime := uint64(0), uint64(0)
 	for cnt < period {
-		retryHeader:
+	retryHeader:
 		header, err := master.BlockHeaderByNumber(curBlockNum)
 		if err != nil {
 			time.Sleep(500 * time.Millisecond)
@@ -115,7 +122,7 @@ func calculateTPS(master *sdk.Account, period int)  {
 		}
 		endTime = header.Time
 
-		retryTxCnt:
+	retryTxCnt:
 		txn, err := master.TxNum(header.Hash())
 		if err != nil {
 			time.Sleep(500 * time.Millisecond)
