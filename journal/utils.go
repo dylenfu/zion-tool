@@ -78,13 +78,12 @@ func prepareTestingAccountsBalance(master *sdk.Account, accounts []*sdk.Account,
 		if err != nil {
 			return err
 		}
-		fmt.Println("deposit for account", "address", account.Address().Hex(), "balance", math.PrintUT(balance))
-		time.Sleep(10 * time.Second)
-		//if balance.Cmp(total) < 0 {
-		//	return fmt.Errorf("%s balance not engough", account.Address().Hex())
-		//} else {
-		//
-		//}
+		if balance.Cmp(total) < 0 {
+			time.Sleep(10 * time.Second)
+			//return fmt.Errorf("%s balance not engough", account.Address().Hex())
+		} else {
+			fmt.Println("deposit for account", "address", account.Address().Hex(), "balance", math.PrintUT(balance))
+		}
 	}
 
 	return nil
