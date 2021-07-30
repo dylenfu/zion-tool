@@ -30,7 +30,7 @@ func HandleTPS(ctx *cli.Context) error {
 
 	// load and try to increase gas price
 	setGasPriceIncr(ctx)
-	
+
 	// load period and tx number per period
 	fmt.Println("try to get period and txn...")
 	period, txn, err := getPeriodAndTxn(ctx)
