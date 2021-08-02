@@ -24,6 +24,15 @@ var (
 			flag.IncrGasPrice,
 		},
 	}
+
+	CmdNativeCall = cli.Command{
+		Name:   "native",
+		Usage:  "try to test native call",
+		Action: journal.HandleNative,
+		Flags: []cli.Flag{
+			flag.ConfigPathFlag,
+		},
+	}
 )
 
 func setupApp() *cli.App {
@@ -40,6 +49,7 @@ func setupApp() *cli.App {
 	}
 	app.Commands = []cli.Command{
 		CmdTPS,
+		CmdNativeCall,
 	}
 	app.Before = beforeCommands
 	app.After = afterCommands
