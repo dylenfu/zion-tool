@@ -10,6 +10,7 @@ import (
 	"github.com/dylenfu/zion-tool/sdk"
 	"github.com/dylenfu/zion-tool/utils/files"
 	"github.com/dylenfu/zion-tool/utils/math"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli"
 )
@@ -116,7 +117,7 @@ func calculateTPS(master *sdk.Account, period int) {
 	cnt := 0
 	totalTx := uint(0)
 	curBlockNum := startBlockNo
-	startTime, endTime := uint64(0), uint64(0)
+	startTime, endTime, preTime := uint64(0), uint64(0), uint64(0)
 	for cnt < period {
 	retryHeader:
 		header, err := master.BlockHeaderByNumber(curBlockNum)
@@ -127,7 +128,13 @@ func calculateTPS(master *sdk.Account, period int) {
 		if curBlockNum == startBlockNo {
 			startTime = header.Time
 		}
+
+		preTime = endTime
 		endTime = header.Time
+
+		pool := new(core.TxPool)
+		pendingTx, err := pool.Pending()
+		pendingTxNum := len(pendingTx)
 
 	retryTxCnt:
 		txn, err := master.TxNum(header.Hash())
@@ -135,11 +142,11 @@ func calculateTPS(master *sdk.Account, period int) {
 			time.Sleep(500 * time.Millisecond)
 			goto retryTxCnt
 		}
-		totalTx += txn
+		totalTx = txn
 
 		if endTime > startTime {
-			tps := totalTx / uint((endTime - startTime))
-			fmt.Println("calculate tps", "startBlock", startBlockNo, "endBlock", curBlockNum, "start time", startTime, "end time", endTime, "total tx", totalTx, "tps", tps)
+			tps := totalTx / uint((endTime - preTime))
+			fmt.Println("calculate tps", "startBlock", startBlockNo, "endBlock", curBlockNum, "pre time", preTime, "end time", endTime, "pendingTx NUM", pendingTxNum, "total tx", totalTx, "tps", tps)
 		}
 
 		curBlockNum += 1
