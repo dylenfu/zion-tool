@@ -10,7 +10,8 @@ import (
 	"github.com/dylenfu/zion-tool/sdk"
 	"github.com/dylenfu/zion-tool/utils/files"
 	"github.com/dylenfu/zion-tool/utils/math"
-	"github.com/ethereum/go-ethereum/core"
+
+	//"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli"
 )
@@ -132,9 +133,12 @@ func calculateTPS(master *sdk.Account, period int) {
 		preTime = endTime
 		endTime = header.Time
 
-		pool := new(core.TxPool)
-		pendingTx, err := pool.Pending()
-		pendingTxNum := len(pendingTx)
+	retryPendingTX:
+		pendingTxNum, err := master.PendingTransactionNum()
+		if err != nil {
+			time.Sleep(500 * time.Millisecond)
+			goto retryPendingTX
+		}
 
 	retryTxCnt:
 		txn, err := master.TxNum(header.Hash())

@@ -165,6 +165,10 @@ func (c *Account) CallContract(caller, contractAddr common.Address, payload []by
 	return c.client.CallContract(context.Background(), arg, nil)
 }
 
+func (c *Account) PendingTransactionNum()  (uint, error) {
+	return c.client.PendingTransactionCount(context.Background())
+}
+
 func AddGasPrice(inc uint64) {
 	added := new(big.Int).SetUint64(inc)
 	gasPrice = new(big.Int).Add(gasPrice, added)
