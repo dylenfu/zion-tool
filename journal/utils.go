@@ -74,8 +74,10 @@ func prepareTestingAccountsBalance(master *sdk.Account, accounts []*sdk.Account,
 	balanceMap := make(map[string]*sdk.Account)
 	for idx := 0; idx < len(accounts); idx++ {
 		addr := accounts[idx].Address()
-		if _, err := master.Transfer(addr, total); err != nil {
+		if tx, err := master.Transfer(addr, total); err != nil {
 			return err
+		} else {
+			fmt.Printf("txhash:%s, %s transfer %v to %s\r\n", tx.Hex(), master.Address().Hex(), total, addr.Hex())
 		}
 		balanceMap[addr.Hex()] = accounts[idx]
 	}
