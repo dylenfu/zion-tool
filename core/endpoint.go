@@ -27,6 +27,9 @@ func Endpoint() {
 	math.Init(18)
 
 	frame.Tool.RegMethod("demo", Demo)
+
+	frame.Tool.RegMethod("transfer", Transfer)
+
 	frame.Tool.RegMethod("tps", TPS)
 	frame.Tool.RegMethod("epoch", Epoch)
 }

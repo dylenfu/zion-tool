@@ -84,6 +84,10 @@ func (c *Account) Balance(blockNum *big.Int) (*big.Int, error) {
 	return c.client.BalanceAt(context.Background(), c.address, blockNum)
 }
 
+func (c *Account) BalanceOf(addr common.Address, blockNum *big.Int) (*big.Int, error) {
+	return c.client.BalanceAt(context.Background(), addr, blockNum)
+}
+
 func (c *Account) Transfer(to common.Address, amount *big.Int) (common.Hash, error) {
 	signedTx, err := c.NewSignedTx(to, amount, nil)
 	if err != nil {

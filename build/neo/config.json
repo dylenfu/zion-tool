@@ -1,0 +1,10 @@
+{
+  "Workspace": "/Users/dylen/software/hotstuff/zion-tool/build/neo",
+  "ChainID": 1002,
+  "Nodes": [
+    {
+      "NodeKey": "4b0c9b9d685db17ac9f295cb12f9d7d2369f5bf524b3ce52ce424031cafda1ae",
+      "Url": "http://49.234.146.144:8545"
+    }
+  ]
+}

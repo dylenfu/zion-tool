@@ -24,15 +24,18 @@ import (
 	"os"
 	"testing"
 
+	"github.com/dylenfu/zion-tool/pkg/math"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
-	testUrl                = "http://localhost:22000"
+	testUrl                = "http://49.234.146.144:8545"
 	testMainNodeKey        = "4b0c9b9d685db17ac9f295cb12f9d7d2369f5bf524b3ce52ce424031cafda1ae"
-	testChainID     uint64 = 101
+	testChainID     uint64 = 1002
 	master          *Account
+	testEth1        = math.Pow10toBigInt(18)
 )
 
 func TestMain(m *testing.M) {
@@ -43,9 +46,10 @@ func TestMain(m *testing.M) {
 
 // go test -v github.com/dylenfu/zion-tool/pkg/sdk -run TestTransfer
 func TestTransfer(t *testing.T) {
-	to := common.HexToAddress("0x8c09d936a1b408d6e0afaa537ba4e06c4504a0ae")
-	amount, _ := new(big.Int).SetString("1000000000000000000", 10)
-	hash, err := master.Transfer(to, amount)
+	to := common.HexToAddress("0x67CDE763bD045B14898d8B044F8afC8695ae8608")
+	amount := 1000000000
+	value := new(big.Int).Mul(testEth1, new(big.Int).SetUint64(uint64(amount)))
+	hash, err := master.Transfer(to, value)
 	if err != nil {
 		t.Fatal(err)
 	}
