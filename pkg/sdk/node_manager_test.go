@@ -84,7 +84,7 @@ func TestGetEpoch(t *testing.T) {
 	t.Log(epoch.String())
 }
 
-// go test -v -count=1 github.com/dylenfu/zion-tool/sdk -run TestPropose
+// go test -v -count=1 github.com/dylenfu/zion-tool/pkg/sdk -run TestPropose
 func TestPropose(t *testing.T) {
 	testUrl = "http://localhost:22000"
 	val1, _ := CustomNewAccount(testChainID, testUrl, getPrivateKey(0))
@@ -119,7 +119,7 @@ func TestPropose(t *testing.T) {
 	t.Logf(epoch.String())
 }
 
-// go test -v -count=1 github.com/dylenfu/zion-tool/sdk -run TestVote
+// go test -v -count=1 github.com/dylenfu/zion-tool/pkg/sdk -run TestVote
 func TestVote(t *testing.T) {
 	testUrl = "http://localhost:22000"
 

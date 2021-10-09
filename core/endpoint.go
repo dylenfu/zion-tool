@@ -28,8 +28,7 @@ func Endpoint() {
 
 	frame.Tool.RegMethod("demo", Demo)
 	frame.Tool.RegMethod("tps", TPS)
-	frame.Tool.RegMethod("propose", Propose)
-	frame.Tool.RegMethod("vote", Vote)
+	frame.Tool.RegMethod("epoch", Epoch)
 }
 
 func Demo() bool {

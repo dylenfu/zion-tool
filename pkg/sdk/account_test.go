@@ -41,7 +41,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-// go test -v github.com/dylenfu/zion-tool/sdk -run TestTransfer
+// go test -v github.com/dylenfu/zion-tool/pkg/sdk -run TestTransfer
 func TestTransfer(t *testing.T) {
 	to := common.HexToAddress("0x8c09d936a1b408d6e0afaa537ba4e06c4504a0ae")
 	amount, _ := new(big.Int).SetString("1000000000000000000", 10)

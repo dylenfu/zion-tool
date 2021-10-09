@@ -1,0 +1,7 @@
+{
+  "ProposerNodeIndex": 0,
+  "OldParticipantsIndexList": [0, 1, 2, 3],
+  "VoterIndexList": [1, 2],
+  "NewParticipantsIndexList": [0, 1, 2, 3, 4],
+  "NextEpochStartHeight": 20000
+}
