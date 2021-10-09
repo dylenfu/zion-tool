@@ -31,7 +31,7 @@ func main() {
 	defer time.Sleep(time.Second)
 
 	log.InitLog(loglevel, log.Stdout)
-	config.Init(configpath)
+	config.LoadConfig(configpath)
 	core.Endpoint()
 
 	methods := make([]string, 0)

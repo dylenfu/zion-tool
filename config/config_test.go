@@ -17,3 +17,13 @@
  */
 
 package config
+
+import "testing"
+
+func TestLoadConfig(t *testing.T) {
+	filepath := "./dev.json"
+	LoadConfig(filepath)
+	for _, v := range Conf.Nodes {
+		t.Log(v.Address.Hex())
+	}
+}

@@ -18,8 +18,14 @@
 
 package core
 
-import "github.com/dylenfu/zion-tool/pkg/frame"
+import (
+	"github.com/dylenfu/zion-tool/pkg/frame"
+	"github.com/dylenfu/zion-tool/pkg/math"
+)
 
 func Endpoint() {
+	math.Init(18)
+
 	frame.Tool.RegMethod("demo", Demo)
+	frame.Tool.RegMethod("tps", TPS)
 }

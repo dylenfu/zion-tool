@@ -18,15 +18,20 @@
 package config
 
 import (
+	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"strings"
 
 	"github.com/dylenfu/zion-tool/pkg/files"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
-	ConfigPath string
-	Conf       *Config
+	Conf *Config
 )
 
 type Config struct {
@@ -35,24 +40,49 @@ type Config struct {
 }
 
 type Node struct {
-	NodeKey string
-	Url     string
+	NodeKey    string            `json:"NodeKey"`
+	Url        string            `json:"Url"`
+	Address    common.Address    `json:"Address,omitempty"`
+	PrivateKey *ecdsa.PrivateKey `json:"PrivateKey,omitempty"`
+	PublicKey  *ecdsa.PublicKey  `json:"PublicKey,omitempty"`
 }
 
-func Init(filepath string) {
-	if err := LoadConfig(filepath, Conf); err != nil {
+func LoadConfig(filepath string) {
+	data, err := files.ReadFile(filepath)
+	if err != nil {
 		panic(err)
+	}
+
+	if err := json.Unmarshal(data, &Conf); err != nil {
+		panic(err)
+	}
+
+	for _, v := range Conf.Nodes {
+		key := v.NodeKey
+		if !strings.Contains(key, "0x") {
+			key = "0x" + key
+		}
+
+		enc, err := hexutil.Decode(key)
+		if err != nil {
+			panic(err)
+		}
+
+		privKey, err := crypto.ToECDSA(enc)
+		if err != nil {
+			panic(err)
+		}
+		v.PrivateKey = privKey
+		v.PublicKey = &privKey.PublicKey
+		v.Address = crypto.PubkeyToAddress(*v.PublicKey)
 	}
 }
 
-func LoadConfig(filepath string, ins interface{}) error {
-	data, err := files.ReadFile(filepath)
+func LoadParams(fileName string, data interface{}) error {
+	filepath := fmt.Sprintf("./cases/%s", fileName)
+	bz, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(data, ins)
-	if err != nil {
-		return fmt.Errorf("json.Unmarshal TestConfig:%s error:%s", data, err)
-	}
-	return nil
+	return json.Unmarshal(bz, data)
 }
