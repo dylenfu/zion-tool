@@ -17,8 +17,42 @@
 
 package config
 
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/dylenfu/zion-tool/pkg/files"
+)
+
+var (
+	ConfigPath string
+	Conf       *Config
+)
+
 type Config struct {
-	ChainID       uint64
-	MasterNodeKey string
-	NodeList      []string
+	ChainID uint64
+	Nodes   []*Node
+}
+
+type Node struct {
+	NodeKey string
+	Url     string
+}
+
+func Init(filepath string) {
+	if err := LoadConfig(filepath, Conf); err != nil {
+		panic(err)
+	}
+}
+
+func LoadConfig(filepath string, ins interface{}) error {
+	data, err := files.ReadFile(filepath)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(data, ins)
+	if err != nil {
+		return fmt.Errorf("json.Unmarshal TestConfig:%s error:%s", data, err)
+	}
+	return nil
 }
