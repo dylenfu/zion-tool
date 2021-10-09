@@ -6,18 +6,18 @@ import (
 	"math/big"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/rpc"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/contracts/native"
 	"github.com/ethereum/go-ethereum/contracts/native/governance"
-	"github.com/ethereum/go-ethereum/contracts/native/utils"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 var (
-	gasLimit = uint64(21000)
+	gasLimit = uint64(210000)
 	gasPrice = new(big.Int).SetUint64(1000000000)
 
 	EmptyHash = common.Hash{}
@@ -25,11 +25,12 @@ var (
 )
 
 type Account struct {
-	signer  types.EIP155Signer
-	pk      *ecdsa.PrivateKey
-	address common.Address
-	url     string
-	client  *ethclient.Client
+	signer    types.EIP155Signer
+	pk        *ecdsa.PrivateKey
+	address   common.Address
+	url       string
+	client    *ethclient.Client
+	rpcClient *rpc.Client
 
 	nonce   uint64
 	nonceMu *sync.RWMutex
@@ -47,11 +48,11 @@ func NewAccount(chainID uint64, url string) (*Account, error) {
 func CustomNewAccount(chainID uint64, url string, pk *ecdsa.PrivateKey) (*Account, error) {
 	address := crypto.PubkeyToAddress(pk.PublicKey)
 	signer := types.NewEIP155Signer(new(big.Int).SetUint64(chainID))
-
-	client, err := ethclient.Dial(url)
+	rpcclient, err := rpc.Dial(url)
 	if err != nil {
 		return nil, err
 	}
+	client := ethclient.NewClient(rpcclient)
 
 	curNonce, err := client.NonceAt(context.Background(), address, nil)
 	if err != nil {
@@ -59,13 +60,14 @@ func CustomNewAccount(chainID uint64, url string, pk *ecdsa.PrivateKey) (*Accoun
 	}
 
 	acc := &Account{
-		signer:  signer,
-		pk:      pk,
-		address: address,
-		url:     url,
-		client:  client,
-		nonce:   curNonce,
-		nonceMu: new(sync.RWMutex),
+		signer:    signer,
+		pk:        pk,
+		address:   address,
+		url:       url,
+		client:    client,
+		rpcClient: rpcclient,
+		nonce:     curNonce,
+		nonceMu:   new(sync.RWMutex),
 	}
 	return acc, nil
 }
@@ -99,16 +101,30 @@ func (c *Account) Nonce() uint64 {
 	return c.nonce
 }
 
-func (c *Account) NewUnsignedTx(to common.Address, amount *big.Int, data []byte) *types.Transaction {
+func (c *Account) NewUnsignedTx(to common.Address, amount *big.Int, data []byte) (*types.Transaction, error) {
 	nonce := c.Nonce()
-	gas := DefaultGasLimit().Uint64()
-	price := DefaultGasPrice()
-
-	return types.NewTransaction(nonce, to, amount, gas, price, data)
+	gasLimit := DefaultGasLimit().Uint64()
+	gasPrice := big.NewInt(2000000000)
+	//gasPrice, err := c.client.SuggestGasPrice(context.Background())
+	//if err != nil {
+	//	return nil, err
+	//}
+	return types.NewTx(&types.LegacyTx{
+		Nonce:    nonce,
+		To:       &to,
+		Value:    amount,
+		Gas:      gasLimit,
+		GasPrice: gasPrice,
+		Data:     data,
+	}), nil
+	// return types.NewTransaction(nonce, to, amount, gas, price, data)
 }
 
 func (c *Account) NewSignedTx(to common.Address, amount *big.Int, data []byte) (*types.Transaction, error) {
-	unsignedTx := c.NewUnsignedTx(to, amount, data)
+	unsignedTx, err := c.NewUnsignedTx(to, amount, data)
+	if err != nil {
+		return nil, err
+	}
 	return types.SignTx(unsignedTx, c.signer, c.pk)
 }
 
@@ -120,26 +136,6 @@ func (c *Account) SendTx(signedTx *types.Transaction) error {
 	}()
 
 	return c.client.SendTransaction(context.Background(), signedTx)
-}
-
-func (c *Account) Epoch() (uint64, error) {
-	contract := native.NativeContractAddrMap[native.NativeGovernance]
-	caller := c.Address()
-	method := governance.MethodGetEpoch
-	payload, err := utils.PackMethod(goverABI, method)
-	if err != nil {
-		return 0, err
-	}
-
-	enc, err := c.CallContract(caller, contract, payload, "latest")
-	if err != nil {
-		return 0, err
-	}
-	output := new(governance.MethodEpochOutput)
-	if err := utils.UnpackOutputs(goverABI, method, output, enc); err != nil {
-		return 0, err
-	}
-	return output.Epoch.Uint64(), nil
 }
 
 func (c *Account) CurrentBlockNumber() (uint64, error) {

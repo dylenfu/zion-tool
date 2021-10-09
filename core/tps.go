@@ -1,11 +1,11 @@
-package journal
+package core
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/dylenfu/zion-tool/sdk"
-	"github.com/dylenfu/zion-tool/utils/math"
+	"github.com/dylenfu/zion-tool/pkg/math"
+	"github.com/dylenfu/zion-tool/pkg/sdk"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/urfave/cli"
 )

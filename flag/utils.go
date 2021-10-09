@@ -1,10 +1,10 @@
 package flag
 
 import (
-	"github.com/dylenfu/zion-tool/utils/math"
+	"github.com/dylenfu/zion-tool/pkg/math"
 	"github.com/ethereum/go-ethereum/common"
-	"math/big"
 	"github.com/urfave/cli"
+	"math/big"
 	"strings"
 	"time"
 )

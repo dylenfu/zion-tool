@@ -5,7 +5,7 @@ import (
 	"math"
 	"math/big"
 
-	"github.com/dylenfu/zion-tool/utils/decimal"
+	"github.com/dylenfu/zion-tool/pkg/decimal"
 	emath "github.com/ethereum/go-ethereum/common/math"
 )
 

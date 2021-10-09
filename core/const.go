@@ -1,7 +1,7 @@
-package journal
+package core
 
 import (
-	"github.com/dylenfu/zion-tool/utils/math"
+	"github.com/dylenfu/zion-tool/pkg/math"
 	"github.com/ethereum/go-ethereum/common"
 )
 

@@ -5,8 +5,8 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/dylenfu/zion-tool/core"
 	"github.com/dylenfu/zion-tool/flag"
-	"github.com/dylenfu/zion-tool/journal"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/urfave/cli"
 )
@@ -15,7 +15,7 @@ var (
 	CmdTPS = cli.Command{
 		Name:   "tps",
 		Usage:  "try to test zion consensus tps.",
-		Action: journal.HandleTPS,
+		Action: core.HandleTPS,
 		Flags: []cli.Flag{
 			flag.ConfigPathFlag,
 			flag.NumberFlag,
@@ -28,7 +28,7 @@ var (
 	CmdNativeCall = cli.Command{
 		Name:   "native",
 		Usage:  "try to test native call",
-		Action: journal.HandleNative,
+		Action: core.HandleNative,
 		Flags: []cli.Flag{
 			flag.ConfigPathFlag,
 		},
@@ -67,7 +67,7 @@ func main() {
 // action execute after commands
 func beforeCommands(ctx *cli.Context) (err error) {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	journal.Init()
+	core.Init()
 	return nil
 }
 

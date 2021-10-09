@@ -1,4 +1,4 @@
-package journal
+package core
 
 import (
 	"fmt"
@@ -7,9 +7,9 @@ import (
 
 	"github.com/dylenfu/zion-tool/config"
 	"github.com/dylenfu/zion-tool/flag"
-	"github.com/dylenfu/zion-tool/sdk"
-	"github.com/dylenfu/zion-tool/utils/files"
-	"github.com/dylenfu/zion-tool/utils/math"
+	"github.com/dylenfu/zion-tool/pkg/files"
+	"github.com/dylenfu/zion-tool/pkg/math"
+	"github.com/dylenfu/zion-tool/pkg/sdk"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/urfave/cli"
 )
@@ -77,7 +77,7 @@ func prepareTestingAccountsBalance(master *sdk.Account, accounts []*sdk.Account,
 		if tx, err := master.Transfer(addr, total); err != nil {
 			return err
 		} else {
-			fmt.Printf("txhash:%s, %s transfer %v to %s\r\n", tx.Hex(), master.Address().Hex(), total, addr.Hex())
+			fmt.Println("master transfer", total, "to", addr.Hex(), "hash", tx.Hex())
 		}
 		balanceMap[addr.Hex()] = accounts[idx]
 	}
