@@ -137,7 +137,7 @@ retry:
 
 	if len(balanceMap) > 0 {
 		time.Sleep(5 * time.Second)
-		log.Info("there are %d account need to preparing\r\n", len(balanceMap))
+		log.Infof("there are %d account need to preparing", len(balanceMap))
 		goto retry
 	}
 

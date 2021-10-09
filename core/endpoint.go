@@ -28,4 +28,10 @@ func Endpoint() {
 
 	frame.Tool.RegMethod("demo", Demo)
 	frame.Tool.RegMethod("tps", TPS)
+	frame.Tool.RegMethod("propose", Propose)
+	frame.Tool.RegMethod("vote", Vote)
+}
+
+func Demo() bool {
+	return true
 }

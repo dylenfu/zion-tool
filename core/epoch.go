@@ -18,6 +18,10 @@
 
 package core
 
-func Demo() bool {
+func Propose() bool {
+	return true
+}
+
+func Vote() bool {
 	return true
 }
