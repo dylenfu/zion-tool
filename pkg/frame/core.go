@@ -12,15 +12,12 @@ var (
 )
 
 type Method func() bool
-type GcFunc func()
 
 type PaletteTool struct {
 	//Map name to method
 	methodsMap map[string]Method
 	//Map method result
 	methodsRes map[string]bool
-	//gc func
-	gc GcFunc
 }
 
 func NewPaletteTool() *PaletteTool {
@@ -32,10 +29,6 @@ func NewPaletteTool() *PaletteTool {
 
 func (pt *PaletteTool) RegMethod(name string, method Method) {
 	pt.methodsMap[name] = method
-}
-
-func (pt *PaletteTool) RegGCFunc(fn GcFunc) {
-	pt.gc = fn
 }
 
 //Start run
@@ -72,7 +65,6 @@ func (pt *PaletteTool) runMethod(index int, methodName string) {
 		ok := method()
 		pt.onAfterMethodFinish(index, methodName, ok)
 		pt.methodsRes[methodName] = ok
-		pt.gc()
 	}
 }
 
@@ -107,7 +99,7 @@ func (pt *PaletteTool) onFinish(methodsList []string) {
 	endTime := time.Now().Unix()
 
 	log.Info("===============================================================")
-	log.Infof("Palette Tool Finish Total:%v Success:%v Failed:%v Skip:%v, SpendTime:%d sec",
+	log.Infof("Zion Tool Finish Total:%v Success:%v Failed:%v Skip:%v, SpendTime:%d sec",
 		len(methodsList),
 		succCount,
 		failedCount,

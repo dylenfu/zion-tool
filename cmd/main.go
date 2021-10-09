@@ -20,7 +20,7 @@ var (
 
 func init() {
 	flag.StringVar(&configpath, "config", "config.json", "configpath of palette-tool")
-	flag.StringVar(&Methods, "t", "connect", "methods to run. use ',' to split methods")
+	flag.StringVar(&Methods, "t", "demo", "methods to run. use ',' to split methods")
 	flag.IntVar(&loglevel, "loglevel", 2, "loglevel [1: debug, 2: info]")
 
 	flag.Parse()
