@@ -20,7 +20,6 @@ package config
 import (
 	"crypto/ecdsa"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"strings"
 
@@ -35,8 +34,9 @@ var (
 )
 
 type Config struct {
-	ChainID uint64
-	Nodes   []*Node
+	Workspace string
+	ChainID   uint64
+	Nodes     []*Node
 }
 
 type Node struct {
@@ -79,7 +79,7 @@ func LoadConfig(filepath string) {
 }
 
 func LoadParams(fileName string, data interface{}) error {
-	filepath := fmt.Sprintf("./cases/%s", fileName)
+	filepath := files.FullPath(Conf.Workspace, "cases", fileName)
 	bz, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		return err
