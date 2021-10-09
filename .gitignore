@@ -1,2 +1,4 @@
 .idea
 zion-tool
+./build
+./config/*.json
