@@ -43,7 +43,7 @@ func TPS() bool {
 		log.Errorf("load master account failed, err: %v", err)
 		return false
 	}
-	log.Info("generate master account success!")
+	log.Split("generate master account success!")
 
 	// create account
 	log.Info("try to generate multi test accounts...")
@@ -53,7 +53,7 @@ func TPS() bool {
 		log.Errorf("generate multi testing accounts failed, err: %v", err)
 		return false
 	}
-	log.Info("generated multi test accounts success!")
+	log.Split("generated multi test accounts success!")
 
 	// prepare balance
 	log.Info("try to prepare test accounts balance...")
@@ -62,7 +62,7 @@ func TPS() bool {
 		log.Errorf("prepare testing accounts balance failed, err: %v", err)
 		return false
 	}
-	log.Info("prepare test accounts balance success!")
+	log.Split("prepare test accounts balance success!")
 
 	// send transactions continuously
 	to := master.Address()

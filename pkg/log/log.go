@@ -283,6 +283,11 @@ func Info(a ...interface{}) {
 	Log.Info(a...)
 }
 
+func Split(a ...interface{}) {
+	Log.Info(a...)
+	Log.Info("-----------------------------------------------------")
+}
+
 func Warn(a ...interface{}) {
 	Log.Warn(a...)
 }
