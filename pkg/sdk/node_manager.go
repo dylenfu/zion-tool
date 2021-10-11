@@ -23,10 +23,11 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math/big"
 	"strings"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common/hexutil"
 
 	"github.com/dylenfu/zion-tool/pkg/log"
 	"github.com/ethereum/go-ethereum/common"
@@ -73,14 +74,7 @@ func (c *Account) Propose(startHeight uint64, peers *nm.Peers) (common.Hash, err
 	if err != nil {
 		return common.EmptyHash, err
 	}
-	tx, err := c.sendNodeManagerTx(payload)
-	if err != nil {
-		return common.EmptyHash, err
-	}
-	if err := c.WaitTransaction(tx); err != nil {
-		return common.EmptyHash, err
-	}
-	return tx, nil
+	return c.sendNodeManagerTx(payload)
 }
 
 func (c *Account) Vote(epochID uint64, proposal common.Hash) (common.Hash, error) {
@@ -93,32 +87,26 @@ func (c *Account) Vote(epochID uint64, proposal common.Hash) (common.Hash, error
 		return common.EmptyHash, err
 	}
 
-	tx, err := c.sendNodeManagerTx(payload)
-	if err != nil {
-		return common.EmptyHash, err
-	}
-
-	if err := c.WaitTransaction(tx); err != nil {
-		return common.EmptyHash, err
-	}
-
-	return tx, nil
+	return c.sendNodeManagerTx(payload)
 }
 
 func (c *Account) sendNodeManagerTx(payload []byte) (common.Hash, error) {
+	hash := common.EmptyHash
 	tx, err := c.NewSignedTx(nodeManagerAddr, big.NewInt(0), payload)
-	//tx, err := c.SendTransaction(nodeManagerAddr, payload)
+	if tx != nil {
+		hash = tx.Hash()
+	}
 	if err != nil {
-		return common.EmptyHash, fmt.Errorf("sign tx failed, err: %v", err)
+		return hash, fmt.Errorf("sign tx failed, err: %v", err)
 	}
 
 	if err := c.SendTx(tx); err != nil {
-		return common.EmptyHash, err
+		return hash, err
 	}
 	if err := c.WaitTransaction(tx.Hash()); err != nil {
-		return common.EmptyHash, err
+		return hash, err
 	}
-	return tx.Hash(), nil
+	return hash, nil
 }
 
 func (c *Account) callNodeManagerPLT(payload []byte, blockNum string) ([]byte, error) {
