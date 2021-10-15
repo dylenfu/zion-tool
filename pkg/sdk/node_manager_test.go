@@ -19,12 +19,17 @@
 package sdk
 
 import (
+	"context"
 	"crypto/ecdsa"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/assert"
+	"math/big"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	. "github.com/ethereum/go-ethereum/contracts/native/go_abi/node_manager_abi"
 	nm "github.com/ethereum/go-ethereum/contracts/native/governance/node_manager"
 	"github.com/ethereum/go-ethereum/contracts/native/utils"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -107,7 +112,7 @@ func TestPropose(t *testing.T) {
 		t.Fatal(err)
 	}
 	event := receipt.Logs[0].Data
-	list, err := utils.UnpackEvent(*nm.ABI, nm.EventPropose, event)
+	list, err := utils.UnpackEvent(*nm.ABI, EventProposed, event)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,4 +144,17 @@ func TestVote(t *testing.T) {
 		}
 		time.Sleep(5 * time.Second)
 	}
+}
+
+func TestCommittedSeals(t *testing.T) {
+	testUrl = "http://101.32.99.70:22000"
+
+	blockNum := uint64(501)
+	acc := getTestAccount(0)
+	header, err := acc.client.HeaderByNumber(context.Background(), new(big.Int).SetUint64(blockNum))
+	assert.NoError(t, err)
+
+	extra, err := types.ExtractHotstuffExtraPayload(header.Extra)
+	assert.NoError(t, err)
+	t.Logf("extra committed seals size %d", len(extra.CommittedSeal))
 }

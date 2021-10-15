@@ -3,5 +3,5 @@
   "OldParticipantsIndexList": [0, 1, 2, 3, 4],
   "VoterIndexList": [1, 2, 3],
   "NewParticipantsIndexList": [0, 1, 2, 3, 4, 5, 6],
-  "NextEpochStartHeight": 2000
+  "NextEpochStartHeight": 500
 }
