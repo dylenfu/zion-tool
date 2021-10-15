@@ -85,12 +85,63 @@ func Epoch() bool {
 	epochID := curEpoch.ID + 1
 	for _, voter := range voters {
 		if tx, err := voter.Vote(epochID, epochHash); err != nil {
-			log.Errorf("voter %s vote failed", voter.Address().Hex())
+			log.Errorf("voter %s vote failed, err: %v", voter.Address().Hex(), err)
 		} else {
 			log.Infof("voter %s voted, hash %s", voter.Address().Hex(), tx.Hex())
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 	}
 
+	return true
+}
+
+func EpochHistory() bool {
+	log.Split("check history epoch info")
+
+	acc, err := masterAccount()
+	if err != nil {
+		log.Errorf("failed to generate account, err %v", err)
+		return false
+	}
+
+	blockNum := "latest"
+	cur, err := acc.GetCurrentEpoch(blockNum)
+	if err != nil {
+		log.Errorf("failed to get current epoch, err: %v", err)
+		return false
+	}
+
+	for id := cur.ID; id > 0; id-- {
+		ep, err := acc.GetEpochByID(id, blockNum)
+		if err != nil {
+			log.Errorf("failed to get epoch %d, err: %v", id, err)
+		} else {
+			log.Split(ep.String())
+		}
+		if ep.ID != id {
+			log.Errorf("epoch id expect %d, got %d", id, ep.ID)
+		}
+
+		proof, err := acc.GetProofByID(id, blockNum)
+		if err != nil {
+			log.Errorf("failed to get epoch %d proof, err: %v", id, err)
+		} else {
+			log.Infof("epoch %d proof %s", id, proof.Hex())
+		}
+		if proof != ep.Hash() {
+			log.Errorf("epoch %d proof expect %s, got %s", id, ep.Hash().Hex(), proof.Hex())
+		}
+	}
+
+	log.Split("try to get changing epoch")
+	log.Split("\r\n")
+
+	changing, err := acc.GetChangingEpoch(blockNum)
+	if changing != nil {
+		log.Split(changing.String())
+	}
+	if err != nil {
+		log.Error(err)
+	}
 	return true
 }

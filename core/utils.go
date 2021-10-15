@@ -10,6 +10,7 @@ import (
 	"github.com/dylenfu/zion-tool/config"
 	"github.com/dylenfu/zion-tool/pkg/sdk"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	. "github.com/ethereum/go-ethereum/contracts/native/go_abi/node_manager_abi"
 	nm "github.com/ethereum/go-ethereum/contracts/native/governance/node_manager"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -67,7 +68,7 @@ func getProposalReceipt(proposer *sdk.Account, tx common.Hash) (*nm.EpochInfo, e
 		return nil, err
 	}
 	event := receipt.Logs[0].Data
-	list, err := utils.UnpackEvent(*nm.ABI, nm.EventPropose, event)
+	list, err := utils.UnpackEvent(*nm.ABI, EventProposed, event)
 	if err != nil {
 		return nil, err
 	}

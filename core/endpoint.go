@@ -32,6 +32,7 @@ func Endpoint() {
 
 	frame.Tool.RegMethod("tps", TPS)
 	frame.Tool.RegMethod("epoch", Epoch)
+	frame.Tool.RegMethod("history", EpochHistory)
 }
 
 func Demo() bool {

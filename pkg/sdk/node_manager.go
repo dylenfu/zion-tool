@@ -50,7 +50,7 @@ func (c *Account) Epoch() (*nm.EpochInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	enc, err := c.callNodeManagerPLT(payload, "latest")
+	enc, err := c.callNodeManager(payload, "latest")
 	if err != nil {
 		return nil, err
 	}
@@ -79,8 +79,8 @@ func (c *Account) Propose(startHeight uint64, peers *nm.Peers) (common.Hash, err
 
 func (c *Account) Vote(epochID uint64, proposal common.Hash) (common.Hash, error) {
 	input := &nm.MethodVoteInput{
-		EpochID: epochID,
-		Hash:    proposal,
+		EpochID:   epochID,
+		EpochHash: proposal,
 	}
 	payload, err := input.Encode()
 	if err != nil {
@@ -88,6 +88,89 @@ func (c *Account) Vote(epochID uint64, proposal common.Hash) (common.Hash, error
 	}
 
 	return c.sendNodeManagerTx(payload)
+}
+
+func (c *Account) GetCurrentEpoch(blockNum string) (*nm.EpochInfo, error) {
+	input := new(nm.MethodEpochInput)
+	payload, err := input.Encode()
+	if err != nil {
+		return nil, err
+	}
+
+	enc, err := c.callNodeManager(payload, blockNum)
+	if err != nil {
+		return nil, err
+	}
+
+	output := new(nm.MethodEpochOutput)
+	if err := output.Decode(enc); err != nil {
+		return nil, err
+	}
+	return output.Epoch, nil
+}
+
+func (c *Account) GetEpochByID(id uint64, blockNum string) (*nm.EpochInfo, error) {
+	input := new(nm.MethodGetEpochByIDInput)
+	input.EpochID = id
+
+	payload, err := input.Encode()
+	if err != nil {
+		return nil, err
+	}
+
+	enc, err := c.callNodeManager(payload, blockNum)
+	if err != nil {
+		return nil, err
+	}
+
+	output := new(nm.MethodEpochOutput)
+	if err := output.Decode(enc); err != nil {
+		return nil, err
+	}
+
+	return output.Epoch, nil
+}
+
+func (c *Account) GetProofByID(id uint64, blockNum string) (common.Hash, error) {
+	input := new(nm.MethodProofInput)
+	input.EpochID = id
+
+	payload, err := input.Encode()
+	if err != nil {
+		return common.EmptyHash, err
+	}
+
+	enc, err := c.callNodeManager(payload, blockNum)
+	if err != nil {
+		return common.EmptyHash, err
+	}
+
+	output := new(nm.MethodProofOutput)
+	if err := output.Decode(enc); err != nil {
+		return common.EmptyHash, err
+	}
+
+	return output.Hash, nil
+}
+
+func (c *Account) GetChangingEpoch(blockNum string) (*nm.EpochInfo, error) {
+	input := new(nm.MethodGetChangingEpochInput)
+
+	payload, err := input.Encode()
+	if err != nil {
+		return nil, err
+	}
+
+	enc, err := c.callNodeManager(payload, blockNum)
+	if err != nil {
+		return nil, err
+	}
+
+	output := new(nm.MethodEpochOutput)
+	if err := output.Decode(enc); err != nil {
+		return nil, err
+	}
+	return output.Epoch, nil
 }
 
 func (c *Account) sendNodeManagerTx(payload []byte) (common.Hash, error) {
@@ -109,7 +192,7 @@ func (c *Account) sendNodeManagerTx(payload []byte) (common.Hash, error) {
 	return hash, nil
 }
 
-func (c *Account) callNodeManagerPLT(payload []byte, blockNum string) ([]byte, error) {
+func (c *Account) callNodeManager(payload []byte, blockNum string) ([]byte, error) {
 	return c.CallContract(c.Address(), nodeManagerAddr, payload, blockNum)
 }
 

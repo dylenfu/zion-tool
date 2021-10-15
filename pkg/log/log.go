@@ -284,8 +284,8 @@ func Info(a ...interface{}) {
 }
 
 func Split(a ...interface{}) {
-	Log.Info(a...)
 	Log.Info("---------------------------------------------------------------")
+	Log.Info(a...)
 }
 
 func Warn(a ...interface{}) {
