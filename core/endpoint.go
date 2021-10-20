@@ -33,6 +33,8 @@ func Endpoint() {
 	frame.Tool.RegMethod("tps", TPS)
 	frame.Tool.RegMethod("epoch", Epoch)
 	frame.Tool.RegMethod("history", EpochHistory)
+
+	frame.Tool.RegMethod("neo-proof", NeoProof)
 }
 
 func Demo() bool {

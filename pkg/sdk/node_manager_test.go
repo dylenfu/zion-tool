@@ -158,3 +158,97 @@ func TestCommittedSeals(t *testing.T) {
 	assert.NoError(t, err)
 	t.Logf("extra committed seals size %d", len(extra.CommittedSeal))
 }
+
+/*
+neo machine
+alias ssh-zion-neo1='ssh ubuntu@49.234.146.144 -p 32000'
+alias ssh-zion-neo2='ssh ubuntu@42.192.185.27 -p 32000'
+alias ssh-zion-neo3='ssh ubuntu@212.129.153.164 -p 32000'
+alias ssh-zion-neo4='ssh ubuntu@42.192.186.75 -p 32000'
+*/
+func TestGetProof(t *testing.T) {
+	urls := map[string]string{
+		"node0": "http://49.234.146.144:8545",
+		"node1": "http://42.192.185.27:8545",
+		"node2": "http://212.129.153.164:8545",
+		"node3": "http://42.192.186.75:8545",
+		"node4": "http://49.234.146.144:8645",
+		"node5": "http://42.192.185.27:8645",
+		"node6": "http://212.129.153.164:8645",
+	}
+	cid := uint64(1002)
+	blockNum := uint64(93442)
+
+	contract := common.HexToAddress("0xa6063efed0487cf5d519b0c9e298c7d2da82e74e")
+	//keys := []common.Hash{
+	//	common.HexToHash("0xa8e2f95eb5af99bc72e1b4d25c76d5abc83861cb2401fcd920d4a5249b1246a6"),
+	//	common.HexToHash("0x976b3f7bcb9b91ec9493a20aafb2fcf89745ca105ee2b1921c72037ceac1a1a8"),
+	//}
+	//for node, url := range urls {
+	//	acc, err := NewAccount(cid, url)
+	//	assert.NoError(t, err)
+	//	for _, key := range keys {
+	//		enc, err := acc.client.StorageAt(context.Background(), contract, key, new(big.Int).SetUint64(blockNum))
+	//		assert.NoError(t, err)
+	//		t.Logf("%s storage state (%s, %s) at block %d", node, key.Hex(), hexutil.Encode(enc), blockNum)
+	//	}
+	//}
+	//
+	//acc, err := NewAccount(cid, "http://212.129.153.164:8545")
+	//assert.NoError(t, err)
+	//
+	//for _, key := range keys {
+	//	blockNum += 1
+	//	enc, err := acc.client.StorageAt(context.Background(), contract, key, new(big.Int).SetUint64(blockNum))
+	//	if err == nil {
+	//		t.Logf("node3 storage state (%s, %s) at block %d", key.Hex(), hexutil.Encode(enc), blockNum)
+	//	}
+	//}
+
+	pkeys := []string{
+		"0xa8e2f95eb5af99bc72e1b4d25c76d5abc83861cb2401fcd920d4a5249b1246a6",
+		"0x976b3f7bcb9b91ec9493a20aafb2fcf89745ca105ee2b1921c72037ceac1a1a8",
+	}
+	for node, url := range urls {
+		acc, _ := NewAccount(cid, url)
+		res, err := acc.client.ProofAt(context.Background(), contract, pkeys, new(big.Int).SetUint64(blockNum))
+		assert.NoError(t, err)
+		t.Logf("%s proof %v", node, res)
+	}
+}
+
+func TestEstimate(t *testing.T) {
+	urls := map[string]string{
+		//"node0": "http://49.234.146.144:8545",
+		//"node1": "http://42.192.185.27:8545",
+		"node2": "http://212.129.153.164:8545",
+		//"node3": "http://42.192.186.75:8545",
+		//"node4": "http://49.234.146.144:8645",
+		//"node5": "http://42.192.185.27:8645",
+		//"node6": "http://212.129.153.164:8645",
+	}
+	cid := uint64(1002)
+	blockNum := uint64(93442)
+	//
+	//pkeys := []string{
+	//	"0xa8e2f95eb5af99bc72e1b4d25c76d5abc83861cb2401fcd920d4a5249b1246a6",
+	//	"0x976b3f7bcb9b91ec9493a20aafb2fcf89745ca105ee2b1921c72037ceac1a1a8",
+	//}
+
+	from := common.HexToAddress("0x67cde763bd045b14898d8b044f8afc8695ae8608")
+	txhash := common.HexToHash("0x5d6db1fa75b36d55773f741a090bcb5da1f1b0f0912e443dcc88ec47fd963ff6")
+
+	acc2, _ := NewAccount(cid, urls["node2"])
+	tx, _,  err := acc2.client.TransactionByHash(context.Background(), txhash)
+	assert.NoError(t, err)
+
+	for _, url := range urls {
+		acc, _ := NewAccount(cid, url)
+		acc.CustomEstimate(tx, from, new(big.Int).SetUint64(blockNum))
+		//acc.client.EstimateGas(context.Background(), ethereum.CallMsg{})
+		//estimate(acc, txhash, from)
+		//res, err := acc.client.ProofAt(context.Background(), contract, pkeys, new(big.Int).SetUint64(blockNum))
+		//assert.NoError(t, err)
+		//t.Logf("%s proof %v", node, res)
+	}
+}

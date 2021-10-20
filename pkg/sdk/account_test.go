@@ -27,6 +27,7 @@ import (
 
 	"github.com/dylenfu/zion-tool/pkg/math"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 )
@@ -42,6 +43,7 @@ var (
 func TestMain(m *testing.M) {
 	privKey, _ := crypto.HexToECDSA(testMainNodeKey)
 	master, _ = CustomNewAccount(testChainID, testUrl, privKey)
+	GetNeoProofABI()
 	os.Exit(m.Run())
 }
 
@@ -151,6 +153,22 @@ func estimate(s *Account, txhash common.Hash, from common.Address) error {
 		AccessList: tx.AccessList(),
 	}
 	if _, err := s.client.EstimateGas(context.Background(), args); err != nil {
+		return  err
+	}
+	return nil
+}
+
+func (c *Account) CustomEstimate(tx *types.Transaction, from common.Address, blockNum *big.Int) error {
+	args := ethereum.CallMsg{
+		From:       from,
+		To:         tx.To(),
+		Gas:        tx.Gas(),
+		GasPrice:   tx.GasPrice(),
+		Value:      tx.Value(),
+		Data:       tx.Data(),
+		AccessList: tx.AccessList(),
+	}
+	if _, err := c.client.EstimateGas(context.Background(), args); err != nil {
 		return  err
 	}
 	return nil
