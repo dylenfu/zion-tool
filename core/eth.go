@@ -29,7 +29,7 @@ import (
 
 func Transfer() bool {
 	var param struct {
-		To     string
+		To     []string
 		Amount uint64
 	}
 
@@ -42,34 +42,36 @@ func Transfer() bool {
 	if err != nil {
 		log.Errorf("generate master account failed, err: %v", err)
 	}
-	to := common.HexToAddress(param.To)
-	amount := new(big.Int).Mul(ETH1, new(big.Int).SetUint64(param.Amount))
+	for _, to := range param.To {
+		to := common.HexToAddress(to)
+		amount := new(big.Int).Mul(ETH1, new(big.Int).SetUint64(param.Amount))
 
-	balanceBeforeTransfer, err := acc.BalanceOf(to, nil)
-	if err != nil {
-		log.Errorf("failed to get balance before transfer, err: %v", err)
-		return false
-	} else {
-		log.Infof("balance before transfer %s", balanceBeforeTransfer.String())
-	}
+		balanceBeforeTransfer, err := acc.BalanceOf(to, nil)
+		if err != nil {
+			log.Errorf("failed to get balance before transfer, err: %v", err)
+			return false
+		} else {
+			log.Infof("balance before transfer %s", balanceBeforeTransfer.String())
+		}
 
-	if _, err := acc.Transfer(to, amount); err != nil {
-		log.Errorf("failed to transfer eth, err: %v", err)
-		return false
-	}
-	time.Sleep(5 * time.Second)
+		if _, err := acc.Transfer(to, amount); err != nil {
+			log.Errorf("failed to transfer eth, err: %v", err)
+			return false
+		}
+		time.Sleep(5 * time.Second)
 
-	balanceAfterTransfer, err := acc.BalanceOf(to, nil)
-	if err != nil {
-		log.Errorf("failed to get balance before transfer, err: %v", err)
-		return false
-	} else {
-		log.Infof("balance after transfer %s", balanceAfterTransfer.String())
-	}
+		balanceAfterTransfer, err := acc.BalanceOf(to, nil)
+		if err != nil {
+			log.Errorf("failed to get balance before transfer, err: %v", err)
+			return false
+		} else {
+			log.Infof("balance after transfer %s", balanceAfterTransfer.String())
+		}
 
-	if balanceAfterTransfer.Cmp(new(big.Int).Add(balanceBeforeTransfer, amount)) != 0 {
-		log.Error("balance not match")
-		return false
+		if balanceAfterTransfer.Cmp(new(big.Int).Add(balanceBeforeTransfer, amount)) != 0 {
+			log.Error("balance not match")
+			return false
+		}
 	}
 
 	return true
