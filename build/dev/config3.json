@@ -1,0 +1,18 @@
+{
+  "Workspace": "/data/gohome/src/zion-tool/build/dev",
+  "ChainID": 10897,
+  "Nodes": [
+    {
+      "NodeKey": "cc69b13ca2c5cd4d76bb881f6ad18d93bd947042c0f3a7adc80bdd17dac68210",
+      "Url": "http://10.203.0.24:22000"
+    },
+    {
+      "NodeKey": "cc69b13ca2c5cd4d76bb881f6ad18d93bd947042c0f3a7adc80bdd17dac68210",
+      "Url": "http://10.203.0.24:22001"
+    },
+    {
+      "NodeKey": "cc69b13ca2c5cd4d76bb881f6ad18d93bd947042c0f3a7adc80bdd17dac68210",
+      "Url": "http://10.203.0.24:22002"
+    }
+  ]
+}
