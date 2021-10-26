@@ -4,31 +4,23 @@
   "Nodes": [
     {
       "NodeKey": "4b0c9b9d685db17ac9f295cb12f9d7d2369f5bf524b3ce52ce424031cafda1ae",
-      "Url": "http://101.32.99.70:22000"
+      "Url": "http://101.32.99.70:22002"
     },
     {
       "NodeKey": "3d9c828244d3b2da70233a0a2aea7430feda17bded6edd7f0c474163802a431c",
-      "Url": "http://101.32.99.132:22000"
+      "Url": "http://101.32.99.132:22002"
     },
     {
       "NodeKey": "cc69b13ca2c5cd4d76bb881f6ad18d93bd947042c0f3a7adc80bdd17dac68210",
-      "Url": "http://124.156.214.163:22000"
+      "Url": "http://124.156.214.163:22002"
     },
     {
       "NodeKey": "018c71d5e3b245117ffba0975e46129371473c6a1d231c5eddf7a8364d704846",
-      "Url": "http://124.156.210.112:22000"
+      "Url": "http://124.156.210.112:22001"
     },
     {
-      "NodeKey": "49e26aa4d60196153153388a24538c2693d65f0010a3a488c0c4c2b2a64b2de4",
-      "Url": "http://101.32.99.70:22001"
-    },
-    {
-      "NodeKey": "9fc1723cff3bc4c11e903a53edb3b31c57b604bfc88a5d16cfec6a64fbf3141c",
-      "Url": "http://101.32.99.132:22001"
-    },
-    {
-      "NodeKey": "5555ebb339d3d5ed1efbf0ca96f5b145134e5ce8044fec693558056d268776ae",
-      "Url": "http://124.156.214.163:22001"
+      "NodeKey": "018c71d5e3b245117ffba0975e46129371473c6a1d231c5eddf7a8364d704846",
+      "Url": "http://124.156.210.112:22002"
     }
   ]
 }
