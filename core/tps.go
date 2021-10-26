@@ -48,7 +48,7 @@ func TPS() bool {
 	// create account
 	log.Info("try to generate multi test accounts...")
 	nodes := config.Conf.Nodes[:params.InstanceNum]
-	accounts, err := generateMultiTestingAccounts(nodes)
+	accounts, err := generateMultiTestingAccounts(nodes, params.AccountsNum)
 	if err != nil {
 		log.Errorf("generate multi testing accounts failed, err: %v", err)
 		return false
@@ -87,16 +87,16 @@ func sendTransfer(acc *sdk.Account, to common.Address, txn int) {
 	}
 }
 
-func generateMultiTestingAccounts(nodes []*config.Node) ([]*sdk.Account, error) {
+func generateMultiTestingAccounts(nodes []*config.Node, num int) ([]*sdk.Account, error) {
 	if nodes == nil || len(nodes) == 0 {
 		return nil, fmt.Errorf("invalid nodes")
 	}
 
-	num := len(nodes)
 	chainID := config.Conf.ChainID
 	accounts := make([]*sdk.Account, num)
+	nodesLen := len(nodes)
 	for idx := 0; idx < num; idx++ {
-		url := nodes[idx%num].Url
+		url := nodes[idx%nodesLen].Url
 		acc, err := sdk.NewAccount(chainID, url)
 		if err != nil {
 			return nil, err
