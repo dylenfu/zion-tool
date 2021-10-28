@@ -57,7 +57,7 @@ func TPS() bool {
 
 	// prepare balance
 	log.Info("try to prepare test accounts balance...")
-	period := int(time.Duration(params.LastTime) / (10 * time.Second))
+	period := int(time.Duration(params.LastTime) / time.Second)
 	if err := prepareTestingAccountsBalance(master, accounts, period, params.TxPerSecond); err != nil {
 		log.Errorf("prepare testing accounts balance failed, err: %v", err)
 		return false

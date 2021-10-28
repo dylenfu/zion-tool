@@ -37,8 +37,10 @@ func TestLoadConfig(t *testing.T) {
 
 func TestLoadPrivateKey(t *testing.T) {
 	files := []string{
-		"/Users/dylen/software/hotstuff/zion-poa/setup/keystore/node0/UTC--2021-10-27T09-58-23.849917000Z--5ac410790b489c400594ad3a284141b4d0b38db5",
-		"/Users/dylen/software/hotstuff/zion-poa/setup/keystore/node1/UTC--2021-10-27T09-58-30.071110000Z--b11772fb50cbfc63b4d853dd38c412867e4bf2f3",
+		"/Users/dylen/software/hotstuff/zion-poa-dev/setup/keystore/node0/UTC--2021-10-28T06-11-29.578784000Z--e4113f21494aae440e551052a2b8666e9f33eaf2",
+		"/Users/dylen/software/hotstuff/zion-poa-dev/setup/keystore/node1/UTC--2021-10-28T06-11-45.473969000Z--003deb81d33ea23254ec8c7727e0db6716c444cc",
+		"/Users/dylen/software/hotstuff/zion-poa-dev/setup/keystore/node2/UTC--2021-10-28T06-11-52.377974000Z--dead7c3c6ae4869dc94158650e4cb3dd1eaaa718",
+		"/Users/dylen/software/hotstuff/zion-poa-dev/setup/keystore/node3/UTC--2021-10-28T06-11-59.378911000Z--52f93cdc8a7085384ab0abe0433dbb2e0f16965a",
 	}
 	pwd := "111111"
 
