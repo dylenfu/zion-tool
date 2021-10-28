@@ -1,0 +1,14 @@
+{
+  "Workspace": "/Users/dylen/software/hotstuff/zion-tool/build/poa",
+  "ChainID": 105,
+  "Nodes": [
+    {
+      "NodeKey": "9628e0e969cdf60733646b4eadbb744e2a9653cb3f40435d7d726814a8729229",
+      "Url": "http://127.0.0.1:42001"
+    },
+    {
+      "NodeKey": "85d5e8afefa64113e990a095d10c854127040fc13c515ddfe2a6e569edaa869e",
+      "Url": "http://127.0.0.1:42002"
+    }
+  ]
+}

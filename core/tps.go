@@ -57,7 +57,7 @@ func TPS() bool {
 
 	// prepare balance
 	log.Info("try to prepare test accounts balance...")
-	period := int(time.Duration(params.LastTime) / time.Second)
+	period := int(time.Duration(params.LastTime) / (10 * time.Second))
 	if err := prepareTestingAccountsBalance(master, accounts, period, params.TxPerSecond); err != nil {
 		log.Errorf("prepare testing accounts balance failed, err: %v", err)
 		return false
@@ -76,10 +76,12 @@ func TPS() bool {
 }
 
 func sendTransfer(acc *sdk.Account, to common.Address, txn int) {
-	ticker := time.NewTicker(1 * time.Second)
+	var duration int = 5
+	txsNum := txn * duration
+	ticker := time.NewTicker(time.Duration(duration) * time.Second)
 
 	for range ticker.C {
-		for i := 0; i < txn; i++ {
+		for i := 0; i < txsNum; i++ {
 			if _, err := acc.Transfer(to, amountPerTx); err != nil {
 				log.Errorf("transfer failed", "err", err)
 			}

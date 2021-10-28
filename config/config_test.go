@@ -18,12 +18,41 @@
 
 package config
 
-import "testing"
+import (
+	"io/ioutil"
+	"testing"
+
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/crypto"
+)
 
 func TestLoadConfig(t *testing.T) {
 	filepath := "./dev.json"
 	LoadConfig(filepath)
 	for _, v := range Conf.Nodes {
 		t.Log(v.Address.Hex())
+	}
+}
+
+func TestLoadPrivateKey(t *testing.T) {
+	files := []string{
+		"/Users/dylen/software/hotstuff/zion-poa/setup/keystore/node0/UTC--2021-10-27T09-58-23.849917000Z--5ac410790b489c400594ad3a284141b4d0b38db5",
+		"/Users/dylen/software/hotstuff/zion-poa/setup/keystore/node1/UTC--2021-10-27T09-58-30.071110000Z--b11772fb50cbfc63b4d853dd38c412867e4bf2f3",
+	}
+	pwd := "111111"
+
+	for _, file := range files {
+		enc, err := ioutil.ReadFile(file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		key, err := keystore.DecryptKey(enc, pwd)
+		if err != nil {
+			t.Fatal(err)
+		}
+		blob := crypto.FromECDSA(key.PrivateKey)
+		hex := hexutil.Encode(blob)
+		t.Logf("%s %s", key.Address.Hex(), hex)
 	}
 }
