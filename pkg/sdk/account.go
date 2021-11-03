@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/contracts/native/governance"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -20,7 +19,6 @@ var (
 	gasPrice = new(big.Int).SetUint64(1000000000)
 
 	EmptyHash = common.Hash{}
-	goverABI  = governance.GetABI()
 )
 
 type Account struct {
