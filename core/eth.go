@@ -20,7 +20,6 @@ package core
 
 import (
 	"math/big"
-	"time"
 
 	"github.com/dylenfu/zion-tool/config"
 	"github.com/dylenfu/zion-tool/pkg/log"
@@ -54,11 +53,12 @@ func Transfer() bool {
 			log.Infof("balance before transfer %s", balanceBeforeTransfer.String())
 		}
 
-		if _, err := acc.Transfer(to, amount); err != nil {
+		if tx, err := acc.Transfer(to, amount); err != nil {
 			log.Errorf("failed to transfer eth, err: %v", err)
 			return false
+		} else {
+			log.Infof("%s transfer %s to %s, tx hash %s", acc.Address().Hex(), amount.String(), to.Hex(), tx.Hex())
 		}
-		time.Sleep(5 * time.Second)
 
 		balanceAfterTransfer, err := acc.BalanceOf(to, nil)
 		if err != nil {
@@ -72,6 +72,7 @@ func Transfer() bool {
 			log.Error("balance not match")
 			return false
 		}
+		log.Split()
 	}
 
 	return true

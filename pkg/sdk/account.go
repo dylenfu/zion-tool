@@ -93,6 +93,9 @@ func (c *Account) Transfer(to common.Address, amount *big.Int) (common.Hash, err
 	if err := c.SendTx(signedTx); err != nil {
 		return EmptyHash, err
 	}
+	if err := c.WaitTransaction(signedTx.Hash()); err != nil {
+		return EmptyHash, err
+	}
 	return signedTx.Hash(), nil
 }
 
