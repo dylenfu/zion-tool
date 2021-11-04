@@ -5,8 +5,8 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/dylenfu/zion-tool/flag"
-	"github.com/dylenfu/zion-tool/journal"
+	"github.com/Chenshuting524/zion-tool/flag"
+	"github.com/Chenshuting524/zion-tool/journal"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/urfave/cli"
 )
