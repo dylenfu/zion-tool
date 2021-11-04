@@ -50,4 +50,10 @@ var (
 		Usage: "gas price increase n wei",
 		Value: 0,
 	}
+
+	BlockNumberFlag =cli.Uint64Flag{
+		Name:  "blocknum",
+		Usage: "use for Blocknum",
+		Value: 0,
+	}
 )

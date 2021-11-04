@@ -169,6 +169,10 @@ func (c *Account) PendingTransactionNum()  (uint, error) {
 	return c.client.PendingTransactionCount(context.Background())
 }
 
+func (c *Account) TransactionByHash(hash common.Hash)  (*types.Transaction, bool,error) {
+	return c.client.TransactionByHash(context.Background(),hash)
+}
+
 func AddGasPrice(inc uint64) {
 	added := new(big.Int).SetUint64(inc)
 	gasPrice = new(big.Int).Add(gasPrice, added)

@@ -33,6 +33,17 @@ var (
 			flag.ConfigPathFlag,
 		},
 	}
+
+	CmdCalculate = cli.Command{
+		Name: "listen",
+		Usage: "Try to listen and the calculate tps",
+		Action: journal.PolyChainListen,
+		Flags:[]cli.Flag{
+			flag.ConfigPathFlag,
+			flag.BlockNumberFlag,
+			flag.PeriodFlag,
+		},
+	}
 )
 
 func setupApp() *cli.App {
@@ -50,6 +61,7 @@ func setupApp() *cli.App {
 	app.Commands = []cli.Command{
 		CmdTPS,
 		CmdNativeCall,
+		CmdCalculate,
 	}
 	app.Before = beforeCommands
 	app.After = afterCommands

@@ -57,7 +57,9 @@ func generateMasterAccount(c *config.Config) (*sdk.Account, error) {
 func generateMultiTestingAccounts(c *config.Config, num int) ([]*sdk.Account, error) {
 	accounts := make([]*sdk.Account, num)
 	for idx := 0; idx < num; idx++ {
-		url := c.NodeList[idx%len(c.NodeList)]
+		//只给一个url发交易
+		url := c.NodeList[0]
+		//url := c.NodeList[idx%len(c.NodeList)]
 		acc, err := sdk.NewAccount(c.ChainID, url)
 		if err != nil {
 			return nil, err
