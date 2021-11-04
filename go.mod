@@ -1,10 +1,3 @@
-module github.com/dylenfu/zion-tool
+module zion-tool
 
-go 1.15
-
-require (
-	github.com/ethereum/go-ethereum v1.10.14
-	github.com/urfave/cli v1.22.4
-)
-
-replace github.com/ethereum/go-ethereum v1.10.14 => ../Zion
+go 1.16
