@@ -103,8 +103,16 @@ func (c *Account) NewUnsignedTx(to common.Address, amount *big.Int, data []byte)
 	nonce := c.Nonce()
 	gas := DefaultGasLimit().Uint64()
 	price := DefaultGasPrice()
+	tx:=types.NewTx(&types.LegacyTx{
+		Nonce:     nonce,
+		GasPrice:  price,
+		Gas:       gas,
+		To:        &to,
+		Value:     amount,
+		Data:      data,
+	})
 
-	return types.NewTransaction(nonce, to, amount, gas, price, data)
+	return tx
 }
 
 func (c *Account) NewSignedTx(to common.Address, amount *big.Int, data []byte) (*types.Transaction, error) {
