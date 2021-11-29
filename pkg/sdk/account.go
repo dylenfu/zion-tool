@@ -3,6 +3,7 @@ package sdk
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"math/big"
 	"sync"
 
@@ -43,29 +44,32 @@ func NewAccount(chainID uint64, url string) (*Account, error) {
 }
 
 func CustomNewAccount(chainID uint64, url string, pk *ecdsa.PrivateKey) (*Account, error) {
-	address := crypto.PubkeyToAddress(pk.PublicKey)
-	signer := types.NewEIP155Signer(new(big.Int).SetUint64(chainID))
 	rpcclient, err := rpc.Dial(url)
 	if err != nil {
 		return nil, err
 	}
 	client := ethclient.NewClient(rpcclient)
 
-	curNonce, err := client.NonceAt(context.Background(), address, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	acc := &Account{
-		signer:    signer,
 		pk:        pk,
-		address:   address,
 		url:       url,
 		client:    client,
 		rpcClient: rpcclient,
-		nonce:     curNonce,
-		nonceMu:   new(sync.RWMutex),
 	}
+
+	if pk != nil {
+		address := crypto.PubkeyToAddress(pk.PublicKey)
+		signer := types.NewEIP155Signer(new(big.Int).SetUint64(chainID))
+		curNonce, err := client.NonceAt(context.Background(), address, nil)
+		if err != nil {
+			return nil, err
+		}
+		acc.signer = signer
+		acc.address = address
+		acc.nonce = curNonce
+		acc.nonceMu = new(sync.RWMutex)
+	}
+
 	return acc, nil
 }
 
@@ -163,6 +167,29 @@ func (c *Account) CallContract(caller, contractAddr common.Address, payload []by
 
 	// todo: block number
 	return c.client.CallContract(context.Background(), arg, nil)
+}
+
+func (c *Account) sendNativeTx(payload []byte, contract common.Address) (common.Hash, error) {
+	return c.sendNativeTxWithValue(payload, big.NewInt(0), contract)
+}
+
+func (c *Account) sendNativeTxWithValue(payload []byte, amount *big.Int, contract common.Address) (common.Hash, error) {
+	hash := common.EmptyHash
+	tx, err := c.NewSignedTx(contract, amount, payload)
+	if tx != nil {
+		hash = tx.Hash()
+	}
+	if err != nil {
+		return hash, fmt.Errorf("sign tx failed, err: %v", err)
+	}
+
+	if err := c.SendTx(tx); err != nil {
+		return hash, err
+	}
+	if err := c.WaitTransaction(tx.Hash()); err != nil {
+		return hash, err
+	}
+	return hash, nil
 }
 
 func AddGasPrice(inc uint64) {

@@ -6,7 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/contracts/native/utils"
 	"github.com/ethereum/go-ethereum/rlp"
-
 	"github.com/dylenfu/zion-tool/config"
 	"github.com/dylenfu/zion-tool/pkg/sdk"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -28,6 +27,21 @@ func generateAccount(index int) (*sdk.Account, error) {
 	}
 	node := config.Conf.Nodes[index]
 	return sdk.CustomNewAccount(chainID, node.Url, node.PrivateKey)
+}
+
+func customGenerateAccount(url string, chainID uint64, nodeKey string) (*sdk.Account, error) {
+	if nodeKey == "" {
+		return sdk.NewAccount(chainID, url)
+	}
+	blob, err := hexutil.Decode(nodeKey)
+	if err != nil {
+		return nil, err
+	}
+	pk, err := crypto.ToECDSA(blob)
+	if err != nil {
+		return nil, err
+	}
+	return sdk.CustomNewAccount(chainID, url, pk)
 }
 
 func generateAccounts(indexList []int) ([]*sdk.Account, error) {

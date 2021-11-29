@@ -23,6 +23,8 @@ import (
 
 	"github.com/dylenfu/zion-tool/config"
 	"github.com/dylenfu/zion-tool/pkg/log"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 // propose new epoch and vote until success
@@ -116,6 +118,8 @@ func EpochHistory() bool {
 		if err != nil {
 			log.Errorf("failed to get epoch %d, err: %v", id, err)
 		} else {
+			enc, _ := rlp.EncodeToBytes(ep)
+			log.Infof("raw epoch: %s", hexutil.Encode(enc))
 			log.Split(ep.String())
 		}
 		if ep.ID != id {

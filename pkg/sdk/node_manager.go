@@ -27,10 +27,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
-
 	"github.com/dylenfu/zion-tool/pkg/log"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	nm "github.com/ethereum/go-ethereum/contracts/native/governance/node_manager"
 	"github.com/ethereum/go-ethereum/contracts/native/utils"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -174,22 +173,7 @@ func (c *Account) GetChangingEpoch(blockNum string) (*nm.EpochInfo, error) {
 }
 
 func (c *Account) sendNodeManagerTx(payload []byte) (common.Hash, error) {
-	hash := common.EmptyHash
-	tx, err := c.NewSignedTx(nodeManagerAddr, big.NewInt(0), payload)
-	if tx != nil {
-		hash = tx.Hash()
-	}
-	if err != nil {
-		return hash, fmt.Errorf("sign tx failed, err: %v", err)
-	}
-
-	if err := c.SendTx(tx); err != nil {
-		return hash, err
-	}
-	if err := c.WaitTransaction(tx.Hash()); err != nil {
-		return hash, err
-	}
-	return hash, nil
+	return c.sendNativeTx(payload, nodeManagerAddr)
 }
 
 func (c *Account) callNodeManager(payload []byte, blockNum string) ([]byte, error) {

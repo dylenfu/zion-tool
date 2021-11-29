@@ -35,6 +35,12 @@ func Endpoint() {
 	frame.Tool.RegMethod("history", EpochHistory)
 
 	frame.Tool.RegMethod("neo-proof", NeoProof)
+
+	frame.Tool.RegMethod("reg-side-chain", RegisterSideChain)
+	frame.Tool.RegMethod("approve-side-chain", ApproveSideChain)
+
+	frame.Tool.RegMethod("sync-genesis-header", SyncGenesisHeader)
+	frame.Tool.RegMethod("mint", Mint)
 }
 
 func Demo() bool {
