@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"sync"
 
+	"github.com/ethereum/go-ethereum/rlp"
+
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -158,7 +160,7 @@ func (c *Account) TxNum(blockHash common.Hash) (uint, error) {
 	return c.client.TransactionCount(context.Background(), blockHash)
 }
 
-func (c *Account) GetProof(contract common.Address, storageKeys []string, blockNum *big.Int) ([]string, []string, error) {
+func (c *Account) GetProof(contract common.Address, storageKeys []string, blockNum *big.Int) ([]byte, []byte, error) {
 	proof, err := c.client.ProofAt(context.Background(), contract, storageKeys, blockNum)
 	if err != nil {
 		return nil, nil, err
@@ -166,7 +168,25 @@ func (c *Account) GetProof(contract common.Address, storageKeys []string, blockN
 	if len(proof.StorageProof) < 1 {
 		return nil, nil, fmt.Errorf("storage length invalid")
 	}
-	return proof.AccountProof, proof.StorageProof[0].Proof, nil
+
+	accountPrf, err := rlpEncodeStringList(proof.AccountProof)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to rlp account proof, err: %v", err)
+	}
+	storageProof, err := rlpEncodeStringList(proof.StorageProof[0].Proof)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to rlp storage proof, err: %v", err)
+	}
+
+	return accountPrf, storageProof, nil
+}
+
+func rlpEncodeStringList(raw []string) ([]byte, error) {
+	var rawBytes []byte
+	for i := 0; i < len(raw); i++ {
+		rawBytes = append(rawBytes, common.Hex2Bytes(raw[i][2:])...)
+	}
+	return rlp.EncodeToBytes(rawBytes)
 }
 
 func (c *Account) CallContract(caller, contractAddr common.Address, payload []byte, blockNum string) ([]byte, error) {

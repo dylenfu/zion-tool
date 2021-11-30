@@ -19,6 +19,8 @@
 package core
 
 import (
+	"encoding/hex"
+	scom "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/common"
 	"github.com/ethereum/go-ethereum/core/state"
 	"math/big"
 
@@ -28,7 +30,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/contracts/native/governance/node_manager"
 	"github.com/ethereum/go-ethereum/contracts/native/utils"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
@@ -169,26 +170,7 @@ func FetchEpochProof() bool {
 	}
 
 	// get header and raw committed seals
-	header, err := sdk.BlockHeaderByNumber(blockHeight)
-	if err != nil {
-		log.Errorf("failed to fetch header, err: %v", err)
-		return false
-	}
-	rawHeader, err := rlp.EncodeToBytes(types.HotstuffFilteredHeader(header, false))
-	if err != nil {
-		log.Errorf("failed to encode filtered header")
-		return false
-	}
-	extra, err := types.ExtractHotstuffExtra(header)
-	if err != nil {
-		log.Errorf("failed to extract header")
-		return false
-	}
-	rawSeals, err := rlp.EncodeToBytes(extra.CommittedSeal)
-	if err != nil {
-		log.Errorf("failed to encode committed seals")
-		return false
-	}
+	_, rawHeader, rawSeals, err := sdk.GetRawHeaderAndSeals(blockHeight)
 	log.Infof("rawHeader: %s", hexutil.Encode(rawHeader))
 	log.Infof("rawSeal: %s", hexutil.Encode(rawSeals))
 
@@ -220,27 +202,8 @@ func FetchEpochProof() bool {
 	if err != nil {
 		log.Errorf("failed to get proof, err: %v", err)
 	}
-
-	rlpEncodeStringList := func(raw []string) ([]byte, error) {
-		var rawBytes []byte
-		for i := 0; i < len(raw); i++ {
-			rawBytes = append(rawBytes, common.Hex2Bytes(raw[i][2:])...)
-		}
-		return rlp.EncodeToBytes(rawBytes)
-	}
-
-	if blob, err := rlpEncodeStringList(accountProof); err != nil {
-		log.Errorf("rlp encode account proof err: %v", err)
-		return false
-	} else {
-		log.Infof("account proof: %s", hexutil.Encode(blob))
-	}
-	if blob, err := rlpEncodeStringList(storageProof); err != nil {
-		log.Errorf("rlp encode storage proof err: %v", err)
-		return false
-	} else {
-		log.Infof("storage proof: %s", hexutil.Encode(blob))
-	}
+	log.Infof("account proof: %s", hexutil.Encode(accountProof))
+	log.Infof("storage proof: %s", hexutil.Encode(storageProof))
 
 	// raw epoch
 	rawEpoch, err := rlp.EncodeToBytes(inf)
@@ -282,14 +245,69 @@ func Mint() bool {
 		return false
 	}
 
-	if hash, err := sender.Mint(param.CrossChainID, receiver.Address(), amount); err != nil {
+	// mint token on main chain
+	hash, err := sender.Mint(param.CrossChainID, receiver.Address(), amount)
+	if err != nil {
 		log.Errorf("failed to mint token, err: %v", err)
 		return false
 	} else {
 		log.Infof("mint success, hash %s", hash.Hex())
 	}
 
-	// convert poly notify events and commitProof to side chain
+	// fetch receipt on main chain
+	receipt, err := sender.GetReceipt(hash)
+	if err != nil {
+		log.Errorf("failed to get receipt, err: %v", err)
+		return false
+	}
+
+	// assemble params for `verifyHeaderAndExecuteTx`
+	_, rawHeader, rawSeals, err := sender.GetRawHeaderAndSeals(receipt.BlockNumber.Uint64())
+	if err != nil {
+		log.Errorf("failed to get raw header and seals, err: %v", err)
+		return false
+	}
+
+	log.Infof("rawHeader: %s", hexutil.Encode(rawHeader))
+	log.Infof("rawSeals: %s", hexutil.Encode(rawSeals))
+
+	// get proof
+	if len(receipt.Logs) != 3 {
+		log.Errorf("event logs should contain (crossChainEvent, lockEvent, makeProofNotify)")
+	}
+	notify := receipt.Logs[2]
+	list, err := utils.UnpackEvent(*scom.ABI, scom.NOTIFY_MAKE_PROOF_EVENT, notify.Data)
+	if err != nil {
+		log.Errorf("failed to unpack makeProof, err: %v", err)
+		return false
+	}
+	if len(list) != 3 {
+		log.Errorf("unpacked list length != 3, it should contains crossChain, lock and makeProof tx event")
+		return false
+	}
+	rawMerkelValue := list[0].(string)
+	merkelDec, err := hex.DecodeString(rawMerkelValue)
+	if err != nil {
+		log.Errorf("failed to decode raw merkel value, err: %v", err)
+		return false
+	}
+	log.Infof("merkle value: %s", hexutil.Encode(merkelDec))
+
+	rawKey := list[2].(string)
+	raw, err := hex.DecodeString(rawKey)
+	if err != nil {
+		log.Errorf("decode ")
+	}
+	slot := state.Key2Slot(raw[common.AddressLength:])
+	key := hexutil.Encode(slot[:])
+	storageKeys := []string{key}
+	accountProof, storageProof, err := sender.GetProof(utils.CrossChainManagerContractAddress, storageKeys, receipt.BlockNumber)
+	if err != nil {
+		log.Errorf("failed to get proof, err: %v", err)
+	}
+	log.Infof("account proof: %s", hexutil.Encode(accountProof))
+	log.Infof("storage proof: %s", hexutil.Encode(storageProof))
+
 	return true
 }
 

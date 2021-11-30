@@ -19,6 +19,9 @@
 package sdk
 
 import (
+	"fmt"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/rlp"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -69,4 +72,24 @@ func (c *Account) sendLockProxyTx(payload []byte, amount *big.Int) (common.Hash,
 
 func (c *Account) callLockProxy(payload []byte, blockNum string) ([]byte, error) {
 	return c.CallContract(c.Address(), utils.LockProxyContractAddress, payload, blockNum)
+}
+
+func (c *Account) GetRawHeaderAndSeals(number uint64) (*types.Header, []byte, []byte, error) {
+	header, err := c.BlockHeaderByNumber(number)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to fetch header, err: %v", err)
+	}
+	rawHeader, err := rlp.EncodeToBytes(types.HotstuffFilteredHeader(header, false))
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to encode header, err: %v", err)
+	}
+	extra, err := types.ExtractHotstuffExtra(header)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to extra header, err: %v", err)
+	}
+	rawSeals, err := rlp.EncodeToBytes(extra.CommittedSeal)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("failed to encode committed seals, err: %v", err)
+	}
+	return header, rawHeader, rawSeals, nil
 }
