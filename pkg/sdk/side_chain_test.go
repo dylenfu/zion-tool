@@ -16,35 +16,6 @@
  * along with The Zion.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package core
+package sdk
 
-import (
-	"github.com/dylenfu/zion-tool/pkg/frame"
-	"github.com/dylenfu/zion-tool/pkg/math"
-)
-
-func Endpoint() {
-	math.Init(18)
-
-	frame.Tool.RegMethod("demo", Demo)
-
-	frame.Tool.RegMethod("transfer", Transfer)
-
-	frame.Tool.RegMethod("tps", TPS)
-	frame.Tool.RegMethod("epoch", Epoch)
-	frame.Tool.RegMethod("history", EpochHistory)
-
-	frame.Tool.RegMethod("neo-proof", NeoProof)
-
-	frame.Tool.RegMethod("reg-side-chain", RegisterSideChain)
-	frame.Tool.RegMethod("approve-side-chain", ApproveSideChain)
-
-	frame.Tool.RegMethod("sync-genesis-header", SyncGenesisHeader)
-	frame.Tool.RegMethod("mint", Mint)
-
-	frame.Tool.RegMethod("epoch-proof", FetchEpochProof)
-}
-
-func Demo() bool {
-	return true
-}
+//func TestSyncGenesisHeader2SideChain(t *testing.)

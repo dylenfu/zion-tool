@@ -158,6 +158,17 @@ func (c *Account) TxNum(blockHash common.Hash) (uint, error) {
 	return c.client.TransactionCount(context.Background(), blockHash)
 }
 
+func (c *Account) GetProof(contract common.Address, storageKeys []string, blockNum *big.Int) ([]string, []string, error) {
+	proof, err := c.client.ProofAt(context.Background(), contract, storageKeys, blockNum)
+	if err != nil {
+		return nil, nil, err
+	}
+	if len(proof.StorageProof) < 1 {
+		return nil, nil, fmt.Errorf("storage length invalid")
+	}
+	return proof.AccountProof, proof.StorageProof[0].Proof, nil
+}
+
 func (c *Account) CallContract(caller, contractAddr common.Address, payload []byte, blockNum string) ([]byte, error) {
 	arg := ethereum.CallMsg{
 		From: caller,

@@ -1,0 +1,6 @@
+{
+  "SideChainID": 108,
+  "CrossChainID": 77,
+  "SideChainUrl": "http://127.0.0.1:22010",
+  "NodeIndexList": [0, 1, 2]
+}
