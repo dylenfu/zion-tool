@@ -282,9 +282,11 @@ func Mint() bool {
 		return false
 	}
 
-	if _, err := sender.Mint(param.CrossChainID, receiver.Address(), amount); err != nil {
+	if hash, err := sender.Mint(param.CrossChainID, receiver.Address(), amount); err != nil {
 		log.Errorf("failed to mint token, err: %v", err)
 		return false
+	} else {
+		log.Infof("mint success, hash %s", hash.Hex())
 	}
 
 	// convert poly notify events and commitProof to side chain

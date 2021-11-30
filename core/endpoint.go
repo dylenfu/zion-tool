@@ -27,22 +27,28 @@ func Endpoint() {
 	math.Init(18)
 
 	frame.Tool.RegMethod("demo", Demo)
+	frame.Tool.RegMethod("neo-proof", NeoProof)
 
+	// main chain normal operation
 	frame.Tool.RegMethod("transfer", Transfer)
-
 	frame.Tool.RegMethod("tps", TPS)
+
+	// main chain change bookeepers
 	frame.Tool.RegMethod("epoch", Epoch)
 	frame.Tool.RegMethod("history", EpochHistory)
 
-	frame.Tool.RegMethod("neo-proof", NeoProof)
-
+	// main chain cross chain operation
 	frame.Tool.RegMethod("reg-side-chain", RegisterSideChain)
 	frame.Tool.RegMethod("approve-side-chain", ApproveSideChain)
 
+	// sync side chain genesis header to main chain
 	frame.Tool.RegMethod("sync-genesis-header", SyncGenesisHeader)
-	frame.Tool.RegMethod("mint", Mint)
 
+	// fetch main chain epoch info and sync to side chain eccm contract
 	frame.Tool.RegMethod("epoch-proof", FetchEpochProof)
+
+	// main chain mint
+	frame.Tool.RegMethod("mint", Mint)
 }
 
 func Demo() bool {
