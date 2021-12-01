@@ -1,4 +1,4 @@
 .idea
 zion-tool
-./buildback
+.build
 ./config/*.json
