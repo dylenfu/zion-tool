@@ -25,6 +25,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/contracts/native"
+	scom "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/common"
 	mlp "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/zion/mainchain/lock_proxy"
 	slp "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/zion/sidechain/lock_proxy"
 	"github.com/ethereum/go-ethereum/contracts/native/utils"
@@ -68,6 +69,24 @@ func (c *Account) Burn(to common.Address, amount *big.Int) (common.Hash, error) 
 	return c.sendLockProxyTx(payload, amount)
 }
 
+//state := &nccmc.EntranceParam{
+//	SourceChainID:         sourceChainId,
+//	Height:                height,
+//	Proof:                 proof,
+//	RelayerAddress:        relayerAddress,
+//	Extra:                 txData,
+//	HeaderOrCrossChainMsg: HeaderOrCrossChainMsg,
+//}
+func (c *Account) ImportOutTransfer(sourceChainID uint64, height uint32, txData, proof, rawHeader []byte) (common.Hash, error) {
+	relayerAddr := c.address[:]
+	payload, err := utils.PackMethod(scom.ABI, scom.MethodImportOuterTransfer, sourceChainID, height, proof, relayerAddr, txData, rawHeader)
+	if err != nil {
+		return common.EmptyHash, err
+	}
+
+	return c.signAndSendTx(payload, utils.CrossChainManagerContractAddress)
+}
+
 func (c *Account) sendLockProxyTx(payload []byte, amount *big.Int) (common.Hash, error) {
 	return c.signAndSendTxWithValue(payload, amount, utils.LockProxyContractAddress)
 }
@@ -104,6 +123,14 @@ function verifyHeaderAndExecuteTx(
         bytes memory storageProof,
         bytes memory rawCrossTx
     ) public returns (bool)
+
+// event CrossChainEvent(
+	address indexed sender,
+	bytes txId,
+	address proxyOrAssetContract,
+	uint64 toChainId,
+	bytes toContract,
+	bytes rawdata);
 */
 
 var (
@@ -115,16 +142,28 @@ var (
 
 const (
 	methodVerifyHeaderAndExecuteTx = "verifyHeaderAndExecuteTx"
+	eventCrossChain                = "CrossChainEvent"
 )
 
 var (
-	midVerifyHeaderAndExecuteTx  = crypto.Keccak256(utils.EncodePacked([]byte(methodVerifyHeaderAndExecuteTx), []byte("(bytes,bytes,bytes,bytes,bytes)")))[:4]
+	midVerifyHeaderAndExecuteTx = crypto.Keccak256(utils.EncodePacked([]byte(methodVerifyHeaderAndExecuteTx), []byte("(bytes,bytes,bytes,bytes,bytes)")))[:4]
+	eidCrossChain               = crypto.Keccak256(utils.EncodePacked([]byte(eventCrossChain), []byte("(address, bytes, address, uint64, bytes, bytes)")))[:4]
+
 	argsVerifyHeaderAndExecuteTx = abi.Arguments{
 		{Type: BytesTy, Name: "rawHeader"},
 		{Type: BytesTy, Name: "rawSeals"},
 		{Type: BytesTy, Name: "accountProof"},
 		{Type: BytesTy, Name: "storageProof"},
 		{Type: BytesTy, Name: "rawCrossTx"},
+	}
+
+	argsCrossChain = abi.Arguments{
+		{Type: AddrTy, Name: "sender", Indexed: true},
+		{Type: BytesTy, Name: "txId"},
+		{Type: AddrTy, Name: "proxyOrAssetContract"},
+		{Type: Uint64Ty, Name: "toChainId"},
+		{Type: BytesTy, Name: "toContract"},
+		{Type: BytesTy, Name: "rawdata"},
 	}
 )
 
@@ -136,4 +175,55 @@ func (c *Account) SideChainVerifyHeaderAndExecute(eccm common.Address, rawHeader
 	payload := utils.EncodePacked(midVerifyHeaderAndExecuteTx, callData)
 
 	return c.signAndSendTx(payload, eccm)
+}
+
+func UnpackSideChainCrossChainEvent(receipt *types.Log) (
+	sender common.Address, txId []byte, proxyOrAsset common.Address, toChainID uint64, toContract []byte, rawData []byte, err error) {
+
+	if len(receipt.Topics) != 2 {
+		err = fmt.Errorf("event log contains indexed field, topics length should be 2")
+		return
+	}
+	if receipt.Data == nil || len(receipt.Data) < 4 {
+		err = fmt.Errorf("recepit data is invalid")
+		return
+	}
+
+	// indexed field will be filtered in args.Unpack
+	sender = common.BytesToAddress(receipt.Topics[1][:])
+
+	var (
+		list []interface{}
+		ok   bool
+	)
+	if list, err = argsCrossChain.Unpack(receipt.Data); err != nil {
+		return
+	}
+	if len(list) != 5 {
+		err = fmt.Errorf("list length should be 4")
+		return
+	}
+
+	if txId, ok = list[0].([]byte); !ok {
+		err = fmt.Errorf("the 1st item should be bytes")
+		return
+	}
+	if proxyOrAsset, ok = list[1].(common.Address); !ok {
+		err = fmt.Errorf("the 2nd item should be address")
+		return
+	}
+	if toChainID, ok = list[2].(uint64); !ok {
+		err = fmt.Errorf("the 3rd item should be uint64")
+		return
+	}
+	if toContract, ok = list[3].([]byte); !ok {
+		err = fmt.Errorf("the 4th item should be bytes")
+		return
+	}
+	if rawData, ok = list[4].([]byte); !ok {
+		err = fmt.Errorf("the 5th item should be bytes")
+		return
+	}
+
+	return
 }

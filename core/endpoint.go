@@ -49,6 +49,7 @@ func Endpoint() {
 
 	// main chain mint
 	frame.Tool.RegMethod("mint", Mint)
+	frame.Tool.RegMethod("burn", Burn)
 }
 
 func Demo() bool {

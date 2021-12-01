@@ -3,6 +3,7 @@ package sdk
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"sync"
@@ -112,9 +113,6 @@ func (c *Account) Nonce() uint64 {
 
 func (c *Account) NewUnsignedTx(to common.Address, amount *big.Int, data []byte) (*types.Transaction, error) {
 	nonce := c.Nonce()
-	//gasLimit := DefaultGasLimit().Uint64()
-	//gasPrice := big.NewInt(2000000000)
-
 	gasPrice, err := c.client.SuggestGasPrice(context.Background())
 	if err != nil {
 		return nil, err
@@ -141,7 +139,6 @@ func (c *Account) NewUnsignedTx(to common.Address, amount *big.Int, data []byte)
 		GasPrice: gasPrice,
 		Data:     data,
 	}), nil
-	// return types.NewTransaction(nonce, to, amount, gas, price, data)
 }
 
 func (c *Account) NewSignedTx(to common.Address, amount *big.Int, data []byte) (*types.Transaction, error) {
@@ -174,7 +171,7 @@ func (c *Account) TxNum(blockHash common.Hash) (uint, error) {
 	return c.client.TransactionCount(context.Background(), blockHash)
 }
 
-func (c *Account) GetProof(contract common.Address, storageKeys []string, blockNum *big.Int) ([]byte, []byte, error) {
+func (c *Account) GetAccountAndStorageProof(contract common.Address, storageKeys []string, blockNum *big.Int) ([]byte, []byte, error) {
 	proof, err := c.client.ProofAt(context.Background(), contract, storageKeys, blockNum)
 	if err != nil {
 		return nil, nil, err
@@ -193,6 +190,14 @@ func (c *Account) GetProof(contract common.Address, storageKeys []string, blockN
 	}
 
 	return accountPrf, storageProof, nil
+}
+
+func (c *Account) GetProof(contract common.Address, storageKeys []string, blockNum *big.Int) ([]byte, error) {
+	proof, err := c.client.ProofAt(context.Background(), contract, storageKeys, blockNum)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(proof)
 }
 
 func rlpEncodeStringList(raw []string) ([]byte, error) {
