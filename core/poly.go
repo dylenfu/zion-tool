@@ -221,20 +221,21 @@ func FetchEpochProof() bool {
 	return true
 }
 
-func Mint() bool {
-	var param struct {
-		SideChainID   uint64
-		CrossChainID  uint64
-		SideChainUrl  string
-		SideChainECCM string
-		NodeKey       string
-		Amount        uint64
-		Relayer       bool
-	}
+type CrossParam struct {
+	SideChainID   uint64
+	CrossChainID  uint64
+	SideChainUrl  string
+	SideChainECCM string
+	NodeKey       string
+	Amount        uint64
+	Relayer       bool
+}
 
+func Mint() bool {
 	log.Info("start to mint...")
 
-	if err := config.LoadParams("test_mint.json", &param); err != nil {
+	param := new(CrossParam)
+	if err := config.LoadParams("test_mint.json", param); err != nil {
 		log.Errorf("failed to load params, err: %v", err)
 		return false
 	}
