@@ -7,13 +7,12 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/ethereum/go-ethereum/rlp"
-
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
@@ -113,12 +112,27 @@ func (c *Account) Nonce() uint64 {
 
 func (c *Account) NewUnsignedTx(to common.Address, amount *big.Int, data []byte) (*types.Transaction, error) {
 	nonce := c.Nonce()
-	gasLimit := DefaultGasLimit().Uint64()
-	gasPrice := big.NewInt(2000000000)
-	//gasPrice, err := c.client.SuggestGasPrice(context.Background())
-	//if err != nil {
-	//	return nil, err
-	//}
+	//gasLimit := DefaultGasLimit().Uint64()
+	//gasPrice := big.NewInt(2000000000)
+
+	gasPrice, err := c.client.SuggestGasPrice(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	callMsg := ethereum.CallMsg{
+		From:     c.Address(),
+		To:       &to,
+		Gas:      0,
+		GasPrice: gasPrice,
+		Value:    amount,
+		Data:     data,
+	}
+	gasLimit, err := c.client.EstimateGas(context.Background(), callMsg)
+	if err != nil {
+		return nil, fmt.Errorf("estimate gas limit error: %s", err.Error())
+	}
+
 	return types.NewTx(&types.LegacyTx{
 		Nonce:    nonce,
 		To:       &to,
@@ -200,11 +214,11 @@ func (c *Account) CallContract(caller, contractAddr common.Address, payload []by
 	return c.client.CallContract(context.Background(), arg, nil)
 }
 
-func (c *Account) sendNativeTx(payload []byte, contract common.Address) (common.Hash, error) {
-	return c.sendNativeTxWithValue(payload, big.NewInt(0), contract)
+func (c *Account) signAndSendTx(payload []byte, contract common.Address) (common.Hash, error) {
+	return c.signAndSendTxWithValue(payload, big.NewInt(0), contract)
 }
 
-func (c *Account) sendNativeTxWithValue(payload []byte, amount *big.Int, contract common.Address) (common.Hash, error) {
+func (c *Account) signAndSendTxWithValue(payload []byte, amount *big.Int, contract common.Address) (common.Hash, error) {
 	hash := common.EmptyHash
 	tx, err := c.NewSignedTx(contract, amount, payload)
 	if tx != nil {

@@ -20,15 +20,17 @@ package sdk
 
 import (
 	"fmt"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/rlp"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/contracts/native"
 	mlp "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/zion/mainchain/lock_proxy"
 	slp "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/zion/sidechain/lock_proxy"
 	"github.com/ethereum/go-ethereum/contracts/native/utils"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 func init() {
@@ -67,7 +69,7 @@ func (c *Account) Burn(to common.Address, amount *big.Int) (common.Hash, error) 
 }
 
 func (c *Account) sendLockProxyTx(payload []byte, amount *big.Int) (common.Hash, error) {
-	return c.sendNativeTxWithValue(payload, amount, utils.LockProxyContractAddress)
+	return c.signAndSendTxWithValue(payload, amount, utils.LockProxyContractAddress)
 }
 
 func (c *Account) callLockProxy(payload []byte, blockNum string) ([]byte, error) {
@@ -92,4 +94,46 @@ func (c *Account) GetRawHeaderAndSeals(number uint64) (*types.Header, []byte, []
 		return nil, nil, nil, fmt.Errorf("failed to encode committed seals, err: %v", err)
 	}
 	return header, rawHeader, rawSeals, nil
+}
+
+/*
+function verifyHeaderAndExecuteTx(
+        bytes memory rawHeader,
+        bytes memory rawSeals,
+        bytes memory accountProof,
+        bytes memory storageProof,
+        bytes memory rawCrossTx
+    ) public returns (bool)
+*/
+
+var (
+	BytesTy, _   = abi.NewType("bytes", "", nil)
+	AddrTy, _    = abi.NewType("address", "", nil)
+	Uint64Ty, _  = abi.NewType("uint64", "", nil)
+	Uint256Ty, _ = abi.NewType("uint256", "", nil)
+)
+
+const (
+	methodVerifyHeaderAndExecuteTx = "verifyHeaderAndExecuteTx"
+)
+
+var (
+	midVerifyHeaderAndExecuteTx  = crypto.Keccak256(utils.EncodePacked([]byte(methodVerifyHeaderAndExecuteTx), []byte("(bytes,bytes,bytes,bytes,bytes)")))[:4]
+	argsVerifyHeaderAndExecuteTx = abi.Arguments{
+		{Type: BytesTy, Name: "rawHeader"},
+		{Type: BytesTy, Name: "rawSeals"},
+		{Type: BytesTy, Name: "accountProof"},
+		{Type: BytesTy, Name: "storageProof"},
+		{Type: BytesTy, Name: "rawCrossTx"},
+	}
+)
+
+func (c *Account) SideChainVerifyHeaderAndExecute(eccm common.Address, rawHeader, rawSeals, accountProof, storageProof, rawCrossTx []byte) (common.Hash, error) {
+	callData, err := argsVerifyHeaderAndExecuteTx.Pack(rawHeader, rawSeals, accountProof, storageProof, rawCrossTx)
+	if err != nil {
+		return common.EmptyHash, err
+	}
+	payload := utils.EncodePacked(midVerifyHeaderAndExecuteTx, callData)
+
+	return c.signAndSendTx(payload, eccm)
 }

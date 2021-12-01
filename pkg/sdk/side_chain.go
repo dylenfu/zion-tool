@@ -64,7 +64,7 @@ func (c *Account) ApproveRegSideChain(chainID uint64) error {
 }
 
 func (c *Account) sendSideChainManagerTx(payload []byte) (common.Hash, error) {
-	return c.sendNativeTx(payload, sideChainManagerAddr)
+	return c.signAndSendTx(payload, sideChainManagerAddr)
 }
 
 func (c *Account) callSideChainManager(payload []byte, blockNum string) ([]byte, error) {

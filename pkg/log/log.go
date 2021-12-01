@@ -288,6 +288,11 @@ func Split(a ...interface{}) {
 	Log.Info(a...)
 }
 
+func Splitf(format string, a ...interface{}) {
+	Log.Info("---------------------------------------------------------------")
+	Log.Infof(format, a...)
+}
+
 func Warn(a ...interface{}) {
 	Log.Warn(a...)
 }

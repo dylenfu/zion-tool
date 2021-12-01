@@ -50,7 +50,7 @@ func (c *Account) SyncBlockHeader(chainID uint64, raw [][]byte) (common.Hash, er
 }
 
 func (c *Account) sendHeaderSyncManagerTx(payload []byte) (common.Hash, error) {
-	return c.sendNativeTx(payload, utils.HeaderSyncContractAddress)
+	return c.signAndSendTx(payload, utils.HeaderSyncContractAddress)
 }
 
 func (c *Account) callHeaderSyncManager(payload []byte, blockNum string) ([]byte, error) {

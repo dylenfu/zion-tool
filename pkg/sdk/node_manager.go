@@ -173,7 +173,7 @@ func (c *Account) GetChangingEpoch(blockNum string) (*nm.EpochInfo, error) {
 }
 
 func (c *Account) sendNodeManagerTx(payload []byte) (common.Hash, error) {
-	return c.sendNativeTx(payload, nodeManagerAddr)
+	return c.signAndSendTx(payload, nodeManagerAddr)
 }
 
 func (c *Account) callNodeManager(payload []byte, blockNum string) ([]byte, error) {
