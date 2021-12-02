@@ -41,10 +41,9 @@ func init() {
 
 func (c *Account) Mint(targetCrossChainID uint64, to common.Address, amount *big.Int) (common.Hash, error) {
 	input := &mlp.MethodLockInput{
-		FromAssetHash: common.EmptyAddress,
-		ToChainId:     targetCrossChainID,
-		ToAddress:     to[:],
-		Amount:        amount,
+		ToChainId: targetCrossChainID,
+		ToAddress: to,
+		Amount:    amount,
 	}
 	payload, err := input.Encode()
 	if err != nil {
@@ -54,10 +53,9 @@ func (c *Account) Mint(targetCrossChainID uint64, to common.Address, amount *big
 	return c.sendLockProxyTx(payload, amount)
 }
 
-func (c *Account) Burn(to common.Address, amount *big.Int) (common.Hash, error) {
+func (c *Account) Burn(amount *big.Int) (common.Hash, error) {
 	input := &slp.MethodBurnInput{
 		ToChainId: native.ZionMainChainID,
-		ToAddress: to,
 		Amount:    amount,
 	}
 

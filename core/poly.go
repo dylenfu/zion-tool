@@ -370,7 +370,7 @@ func Burn() bool {
 
 	// mint token on main chain
 	log.Splitf("start to burn...")
-	hash, err := sender.Burn(sender.Address(), amount)
+	hash, err := sender.Burn(amount)
 	if err != nil {
 		log.Errorf("failed to burn token, err: %v", err)
 		return false
