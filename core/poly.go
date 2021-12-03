@@ -24,19 +24,17 @@ import (
 	"math/big"
 	"time"
 
-	"github.com/ethereum/go-ethereum/crypto"
-
-	"github.com/dylenfu/zion-tool/pkg/sdk"
-	scom "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/common"
-	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/types"
-
 	"github.com/dylenfu/zion-tool/config"
 	"github.com/dylenfu/zion-tool/pkg/log"
+	"github.com/dylenfu/zion-tool/pkg/sdk"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	scom "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/common"
 	"github.com/ethereum/go-ethereum/contracts/native/governance/node_manager"
 	"github.com/ethereum/go-ethereum/contracts/native/utils"
+	"github.com/ethereum/go-ethereum/core/state"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
