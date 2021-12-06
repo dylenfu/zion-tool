@@ -167,9 +167,9 @@ func FetchEpochProof() bool {
 
 	// param height should be epoch start height, and block n- 1 is the block which stored new epoch validators
 	blockHeight := param.Height
-	if !param.IsGenesis {
-		blockHeight = param.Height - 1
-	}
+	//if !param.IsGenesis {
+	//	blockHeight = param.Height - 1
+	//}
 
 	sdk, err := masterAccount()
 	if err != nil {

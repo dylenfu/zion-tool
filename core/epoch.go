@@ -114,13 +114,14 @@ func EpochHistory() bool {
 	}
 
 	for id := cur.ID; id > 0; id-- {
+		log.Split()
 		ep, err := acc.GetEpochByID(id, blockNum)
 		if err != nil {
 			log.Errorf("failed to get epoch %d, err: %v", id, err)
 		} else {
 			enc, _ := rlp.EncodeToBytes(ep)
 			log.Infof("raw epoch: %s", hexutil.Encode(enc))
-			log.Split(ep.String())
+			log.Infof(ep.String())
 		}
 		if ep.ID != id {
 			log.Errorf("epoch id expect %d, got %d", id, ep.ID)
@@ -144,8 +145,6 @@ func EpochHistory() bool {
 	if changing != nil {
 		log.Split(changing.String())
 	}
-	if err != nil {
-		log.Error(err)
-	}
+
 	return true
 }
