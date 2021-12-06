@@ -264,7 +264,6 @@ func Mint() bool {
 	}
 
 	// mint token on main chain
-	log.Splitf("start to mint...")
 	hash, err := sender.Mint(param.CrossChainID, receiver.Address(), amount)
 	if err != nil {
 		log.Errorf("failed to mint token, err: %v", err)
@@ -370,7 +369,6 @@ func Burn() bool {
 	}
 
 	// mint token on main chain
-	log.Splitf("start to burn...")
 	hash, err := sender.Burn(amount)
 	if err != nil {
 		log.Errorf("failed to burn token, err: %v", err)
