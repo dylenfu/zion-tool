@@ -84,10 +84,13 @@ func ApproveSideChain() bool {
 		return false
 	}
 
+	log.Splitf("proposer account list length %d", len(accs))
 	for _, proposer := range accs {
 		if err := proposer.ApproveRegSideChain(param.SideChainID); err != nil {
 			log.Errorf("failed to register side chain, err: %v", err)
-			return false
+			//return false
+		} else {
+			log.Debugf("proposer %s approve register side chain %d", proposer.Address().Hex(), param.SideChainID)
 		}
 	}
 
