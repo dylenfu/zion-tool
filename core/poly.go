@@ -598,13 +598,12 @@ func FetchTxProof() bool {
 	}
 
 	eccd := common.HexToAddress(param.SideChainECCD)
-	rawProof, rawMakeTxParam, err := sideChainProof(sender, eccd, receipt)
+	rawProof, _, err := sideChainProof(sender, eccd, receipt)
 	if err != nil {
 		log.Errorf("failed to get side chain proof, err: %v", err)
 		return false
 	}
 	log.Infof("proof: %s", hexutil.Encode(rawProof))
-	log.Infof("makeTxParam: %s", hexutil.Encode(rawMakeTxParam))
 
 	return true
 }
