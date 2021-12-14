@@ -474,7 +474,7 @@ func mainChain2Proof(mainChainSdk *sdk.Account, receipt *types.Receipt) ([]byte,
 
 // event CrossChainEvent(address indexed sender, bytes txId, address proxyOrAssetContract, uint64 toChainId, bytes toContract, bytes rawdata);
 func sideChainProof(sideChainSdk *sdk.Account, eccd common.Address, receipt *types.Receipt) ([]byte, []byte, error) {
-	if len(receipt.Logs) != 2 {
+	if len(receipt.Logs) < 2 {
 		return nil, nil, fmt.Errorf("receipt log length should be 2")
 	}
 	// the first log is cross chain
@@ -532,7 +532,7 @@ func sideChainProof(sideChainSdk *sdk.Account, eccd common.Address, receipt *typ
 	}
 	proofKey := hexutil.Encode(keyBytes)
 
-	proof, err := sideChainSdk.GetProof(eccd, []string{proofKey}, receipt.BlockNumber)
+	proof, err := sideChainSdk.GetProof(eccd, []string{proofKey}, nil)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get proof, err: %v", err)
 	}
@@ -568,4 +568,43 @@ func dumpBalance(mainChainSdk *sdk.Account, sideChainSdk *sdk.Account, sender, r
 	} else {
 		return receiverBalanceOnMainChain, nil
 	}
+}
+
+func FetchTxProof() bool {
+	var param struct {
+		SideChainID   uint64
+		SideChainUrl  string
+		SideChainECCD string
+		SideChainECCM string
+		TxHash        string
+	}
+
+	if err := config.LoadParams("test_tx_proof.json", &param); err != nil {
+		log.Errorf("failed to load params, err: %v", err)
+		return false
+	}
+
+	sender, err := customGenerateAccount(param.SideChainUrl, param.SideChainID, "")
+	if err != nil {
+		log.Errorf("failed to generate receiver account, err: %v", err)
+		return false
+	}
+
+	hash := common.HexToHash(param.TxHash)
+	receipt, err := sender.GetReceipt(hash)
+	if err != nil {
+		log.Errorf("failed to get receipt, err: %v", err)
+		return false
+	}
+
+	eccd := common.HexToAddress(param.SideChainECCD)
+	rawProof, rawMakeTxParam, err := sideChainProof(sender, eccd, receipt)
+	if err != nil {
+		log.Errorf("failed to get side chain proof, err: %v", err)
+		return false
+	}
+	log.Infof("proof: %s", hexutil.Encode(rawProof))
+	log.Infof("makeTxParam: %s", hexutil.Encode(rawMakeTxParam))
+
+	return true
 }
