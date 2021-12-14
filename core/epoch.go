@@ -106,8 +106,7 @@ func EpochHistory() bool {
 		return false
 	}
 
-	blockNum := "latest"
-	cur, err := acc.GetCurrentEpoch(blockNum)
+	cur, err := acc.GetCurrentEpoch(nil)
 	if err != nil {
 		log.Errorf("failed to get current epoch, err: %v", err)
 		return false
@@ -115,7 +114,7 @@ func EpochHistory() bool {
 
 	for id := cur.ID; id > 0; id-- {
 		log.Split()
-		ep, err := acc.GetEpochByID(id, blockNum)
+		ep, err := acc.GetEpochByID(id, nil)
 		if err != nil {
 			log.Errorf("failed to get epoch %d, err: %v", id, err)
 		} else {
@@ -127,7 +126,7 @@ func EpochHistory() bool {
 			log.Errorf("epoch id expect %d, got %d", id, ep.ID)
 		}
 
-		proof, err := acc.GetProofByID(id, blockNum)
+		proof, err := acc.GetProofByID(id, nil)
 		if err != nil {
 			log.Errorf("failed to get epoch %d proof, err: %v", id, err)
 		} else {
@@ -141,10 +140,41 @@ func EpochHistory() bool {
 	log.Split("try to get changing epoch")
 	log.Split("\r\n")
 
-	changing, err := acc.GetChangingEpoch(blockNum)
+	changing, err := acc.GetChangingEpoch(nil)
 	if changing != nil {
 		log.Split(changing.String())
 	}
 
+	return true
+}
+
+func Header() bool {
+	var param struct {
+		Height uint64
+	}
+
+	if err := config.LoadParams("test_header.json", &param); err != nil {
+		log.Errorf("failed to load params, err: %v", err)
+		return false
+	}
+
+	cli, err := masterAccount()
+	if err != nil {
+		log.Errorf("failed to generate client, err: %v", err)
+		return false
+	}
+
+	header, err := cli.BlockHeaderByNumber(param.Height)
+	if err != nil {
+		log.Errorf("failed to get header, err: %v", err)
+		return false
+	}
+	blob, err := header.MarshalJSON()
+	if err != nil {
+		log.Errorf("failed to marshal header, err: %v", err)
+		return false
+	}
+
+	log.Infof("header json and hexutil format: %s", hexutil.Encode(blob))
 	return true
 }

@@ -36,6 +36,7 @@ func Endpoint() {
 	// main chain change bookeepers
 	frame.Tool.RegMethod("epoch", Epoch)
 	frame.Tool.RegMethod("history", EpochHistory)
+	frame.Tool.RegMethod("header", Header)
 
 	// main chain cross chain operation
 	frame.Tool.RegMethod("reg-side-chain", RegisterSideChain)

@@ -53,7 +53,7 @@ func (c *Account) sendHeaderSyncManagerTx(payload []byte) (common.Hash, error) {
 	return c.signAndSendTx(payload, utils.HeaderSyncContractAddress)
 }
 
-func (c *Account) callHeaderSyncManager(payload []byte, blockNum string) ([]byte, error) {
+func (c *Account) callHeaderSyncManager(payload []byte, blockNum *big.Int) ([]byte, error) {
 	return c.CallContract(c.Address(), utils.HeaderSyncContractAddress, payload, blockNum)
 }
 

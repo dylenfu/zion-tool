@@ -89,7 +89,7 @@ func (c *Account) sendLockProxyTx(payload []byte, amount *big.Int) (common.Hash,
 	return c.signAndSendTxWithValue(payload, amount, utils.LockProxyContractAddress)
 }
 
-func (c *Account) callLockProxy(payload []byte, blockNum string) ([]byte, error) {
+func (c *Account) callLockProxy(payload []byte, blockNum *big.Int) ([]byte, error) {
 	return c.CallContract(c.Address(), utils.LockProxyContractAddress, payload, blockNum)
 }
 

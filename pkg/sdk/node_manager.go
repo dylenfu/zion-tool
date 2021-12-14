@@ -49,7 +49,7 @@ func (c *Account) Epoch() (*nm.EpochInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	enc, err := c.callNodeManager(payload, "latest")
+	enc, err := c.callNodeManager(payload, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (c *Account) Vote(epochID uint64, proposal common.Hash) (common.Hash, error
 	return c.sendNodeManagerTx(payload)
 }
 
-func (c *Account) GetCurrentEpoch(blockNum string) (*nm.EpochInfo, error) {
+func (c *Account) GetCurrentEpoch(blockNum *big.Int) (*nm.EpochInfo, error) {
 	input := new(nm.MethodEpochInput)
 	payload, err := input.Encode()
 	if err != nil {
@@ -108,7 +108,7 @@ func (c *Account) GetCurrentEpoch(blockNum string) (*nm.EpochInfo, error) {
 	return output.Epoch, nil
 }
 
-func (c *Account) GetEpochByID(id uint64, blockNum string) (*nm.EpochInfo, error) {
+func (c *Account) GetEpochByID(id uint64, blockNum *big.Int) (*nm.EpochInfo, error) {
 	input := new(nm.MethodGetEpochByIDInput)
 	input.EpochID = id
 
@@ -130,7 +130,7 @@ func (c *Account) GetEpochByID(id uint64, blockNum string) (*nm.EpochInfo, error
 	return output.Epoch, nil
 }
 
-func (c *Account) GetProofByID(id uint64, blockNum string) (common.Hash, error) {
+func (c *Account) GetProofByID(id uint64, blockNum *big.Int) (common.Hash, error) {
 	input := new(nm.MethodProofInput)
 	input.EpochID = id
 
@@ -139,7 +139,7 @@ func (c *Account) GetProofByID(id uint64, blockNum string) (common.Hash, error) 
 		return common.EmptyHash, err
 	}
 
-	enc, err := c.callNodeManager(payload, blockNum)
+	enc, err := c.callNodeManager(payload, nil)
 	if err != nil {
 		return common.EmptyHash, err
 	}
@@ -152,7 +152,7 @@ func (c *Account) GetProofByID(id uint64, blockNum string) (common.Hash, error) 
 	return output.Hash, nil
 }
 
-func (c *Account) GetChangingEpoch(blockNum string) (*nm.EpochInfo, error) {
+func (c *Account) GetChangingEpoch(blockNum *big.Int) (*nm.EpochInfo, error) {
 	input := new(nm.MethodGetChangingEpochInput)
 
 	payload, err := input.Encode()
@@ -176,7 +176,7 @@ func (c *Account) sendNodeManagerTx(payload []byte) (common.Hash, error) {
 	return c.signAndSendTx(payload, nodeManagerAddr)
 }
 
-func (c *Account) callNodeManager(payload []byte, blockNum string) ([]byte, error) {
+func (c *Account) callNodeManager(payload []byte, blockNum *big.Int) ([]byte, error) {
 	return c.CallContract(c.Address(), nodeManagerAddr, payload, blockNum)
 }
 

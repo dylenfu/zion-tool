@@ -22,6 +22,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	sm "github.com/ethereum/go-ethereum/contracts/native/governance/side_chain_manager"
 	"github.com/ethereum/go-ethereum/contracts/native/utils"
+	"math/big"
 )
 
 var (
@@ -67,6 +68,6 @@ func (c *Account) sendSideChainManagerTx(payload []byte) (common.Hash, error) {
 	return c.signAndSendTx(payload, sideChainManagerAddr)
 }
 
-func (c *Account) callSideChainManager(payload []byte, blockNum string) ([]byte, error) {
+func (c *Account) callSideChainManager(payload []byte, blockNum *big.Int) ([]byte, error) {
 	return c.CallContract(c.Address(), sideChainManagerAddr, payload, blockNum)
 }

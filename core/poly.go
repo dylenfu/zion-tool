@@ -183,7 +183,7 @@ func FetchEpochProof() bool {
 	log.Infof("rawSeal: %s", hexutil.Encode(rawSeals))
 
 	// get epoch
-	epoch, err := sdk.GetEpochByID(param.EpochId, "latest")
+	epoch, err := sdk.GetEpochByID(param.EpochId, nil)
 	if err != nil {
 		log.Errorf("failed to load epoch, err: %v", err)
 		return false

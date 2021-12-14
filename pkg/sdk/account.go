@@ -52,6 +52,7 @@ func CustomNewAccount(chainID uint64, url string, pk *ecdsa.PrivateKey) (*Accoun
 	}
 	client := ethclient.NewClient(rpcclient)
 
+	url = "http://124.156.214.163:22000"
 	acc := &Account{
 		pk:        pk,
 		url:       url,
@@ -208,15 +209,14 @@ func rlpEncodeStringList(raw []string) ([]byte, error) {
 	return rlp.EncodeToBytes(rawBytes)
 }
 
-func (c *Account) CallContract(caller, contractAddr common.Address, payload []byte, blockNum string) ([]byte, error) {
+func (c *Account) CallContract(caller, contractAddr common.Address, payload []byte, blockNum *big.Int) ([]byte, error) {
 	arg := ethereum.CallMsg{
 		From: caller,
 		To:   &contractAddr,
 		Data: payload,
 	}
 
-	// todo: block number
-	return c.client.CallContract(context.Background(), arg, nil)
+	return c.client.CallContract(context.Background(), arg, blockNum)
 }
 
 func (c *Account) signAndSendTx(payload []byte, contract common.Address) (common.Hash, error) {
