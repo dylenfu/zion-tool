@@ -398,7 +398,7 @@ func Burn() bool {
 	log.Infof("rawHeader: %s", hexutil.Encode(rawHeader))
 
 	// get proof
-	proof, txData, err := sideChainProof(sender, common.HexToAddress(param.SideChainECCD), receipt)
+	proof, txData, err := sideChainProof(sender, common.HexToAddress(param.SideChainECCD), receipt, nil)
 	if err != nil {
 		log.Errorf("failed to get proof, err: %v", err)
 		return false
@@ -473,7 +473,7 @@ func mainChain2Proof(mainChainSdk *sdk.Account, receipt *types.Receipt) ([]byte,
 }
 
 // event CrossChainEvent(address indexed sender, bytes txId, address proxyOrAssetContract, uint64 toChainId, bytes toContract, bytes rawdata);
-func sideChainProof(sideChainSdk *sdk.Account, eccd common.Address, receipt *types.Receipt) ([]byte, []byte, error) {
+func sideChainProof(sideChainSdk *sdk.Account, eccd common.Address, receipt *types.Receipt, blockNumber *big.Int) ([]byte, []byte, error) {
 	if len(receipt.Logs) < 2 {
 		return nil, nil, fmt.Errorf("receipt log length should be 2")
 	}
@@ -532,7 +532,7 @@ func sideChainProof(sideChainSdk *sdk.Account, eccd common.Address, receipt *typ
 	}
 	proofKey := hexutil.Encode(keyBytes)
 
-	proof, err := sideChainSdk.GetProof(eccd, []string{proofKey}, nil)
+	proof, err := sideChainSdk.GetProof(eccd, []string{proofKey}, blockNumber)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get proof, err: %v", err)
 	}
@@ -577,6 +577,7 @@ func FetchTxProof() bool {
 		SideChainECCD string
 		SideChainECCM string
 		TxHash        string
+		Distance      uint64
 	}
 
 	if err := config.LoadParams("test_tx_proof.json", &param); err != nil {
@@ -598,12 +599,18 @@ func FetchTxProof() bool {
 	}
 
 	eccd := common.HexToAddress(param.SideChainECCD)
-	rawProof, _, err := sideChainProof(sender, eccd, receipt)
+	curNumber, err := sender.CurrentBlockNumber()
+	if err != nil {
+		log.Errorf("failed to get current block number, err %v", err)
+		return false
+	}
+	blockNumber := new(big.Int).SetUint64(curNumber - param.Distance)
+	rawProof, _, err := sideChainProof(sender, eccd, receipt, blockNumber)
 	if err != nil {
 		log.Errorf("failed to get side chain proof, err: %v", err)
 		return false
 	}
-	log.Infof("proof: %s", hexutil.Encode(rawProof))
+	log.Infof("current block number %d, distance %d, fetch number %d, proof: %s", curNumber, param.Distance, blockNumber.Uint64(), hexutil.Encode(rawProof))
 
 	return true
 }
