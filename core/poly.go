@@ -29,6 +29,7 @@ import (
 	"github.com/dylenfu/zion-tool/pkg/sdk"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	hcom "github.com/ethereum/go-ethereum/contracts/native/header_sync/common"
 	scom "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/common"
 	"github.com/ethereum/go-ethereum/contracts/native/governance/node_manager"
 	"github.com/ethereum/go-ethereum/contracts/native/utils"
@@ -220,6 +221,38 @@ func FetchEpochProof() bool {
 		return false
 	}
 	log.Infof("rawEpoch: %s", hexutil.Encode(rawEpoch))
+
+	return true
+}
+
+func FetchSideChainHeight() bool {
+	var param struct {
+		CrossChainID    uint64
+	}
+
+	log.Info("start to fetch epoch header and proof...")
+
+	if err := config.LoadParams("test_epoch_proof.json", &param); err != nil {
+		log.Errorf("failed to load params, err: %v", err)
+		return false
+	}
+
+	sdk, err := masterAccount()
+	if err != nil {
+		log.Errorf("failed to load master account, err: %v", err)
+		return false
+	}
+
+	// get proof
+	contractAddr := utils.HeaderSyncContractAddress
+	cacheKey := utils.ConcatKey(contractAddr, []byte(hcom.CONSENSUS_PEER_BLOCK_HEIGHT), utils.GetUint64Bytes(param.CrossChainID))
+	slot := state.Key2Slot(cacheKey[common.AddressLength:])
+	proof, err := sdk.StorageAt(contractAddr, slot, nil)
+	if err != nil {
+		log.Errorf("failed to get proof, err: %v", err)
+		return false
+	}
+	log.Infof("storage proof: %s", hexutil.Encode(proof))
 
 	return true
 }

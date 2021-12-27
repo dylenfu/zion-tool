@@ -47,6 +47,7 @@ func Endpoint() {
 
 	// fetch main chain epoch info and sync to side chain eccm contract
 	frame.Tool.RegMethod("epoch-proof", FetchEpochProof)
+	frame.Tool.RegMethod("side-height", FetchSideChainHeight)
 
 	frame.Tool.RegMethod("tx-proof", FetchTxProof)
 

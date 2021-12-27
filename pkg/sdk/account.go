@@ -193,6 +193,10 @@ func (c *Account) GetAccountAndStorageProof(contract common.Address, storageKeys
 	return accountPrf, storageProof, nil
 }
 
+func (c *Account) StorageAt(contract common.Address, storageKey common.Hash, blockNum *big.Int) ([]byte, error) {
+	return c.client.StorageAt(context.Background(), contract, storageKey, blockNum)
+}
+
 func (c *Account) GetProof(contract common.Address, storageKeys []string, blockNum *big.Int) ([]byte, error) {
 	proof, err := c.client.ProofAt(context.Background(), contract, storageKeys, blockNum)
 	if err != nil {
