@@ -24,6 +24,7 @@ import (
 	"github.com/dylenfu/zion-tool/config"
 	"github.com/dylenfu/zion-tool/pkg/log"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
@@ -174,7 +175,10 @@ func Header() bool {
 		log.Errorf("failed to marshal header, err: %v", err)
 		return false
 	}
-
+	if err := new(types.Header).UnmarshalJSON(blob); err != nil {
+		log.Errorf("failed to unmarshal header, err: %v", err)
+		return false
+	}
 	log.Infof("header json and hexutil format: %s", hexutil.Encode(blob))
 	return true
 }
