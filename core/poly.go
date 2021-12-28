@@ -34,6 +34,7 @@ import (
 	"github.com/ethereum/go-ethereum/contracts/native/governance/node_manager"
 	"github.com/ethereum/go-ethereum/contracts/native/utils"
 	"github.com/ethereum/go-ethereum/core/state"
+	cstates "github.com/polynetwork/poly/core/states"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
@@ -100,6 +101,53 @@ func ApproveSideChain() bool {
 
 // sync side chain genesis header to poly
 func SyncGenesisHeader() bool {
+	var param struct {
+		SideChainID   uint64
+		CrossChainID  uint64
+		SideChainUrl  string
+		NodeIndexList []int
+	}
+
+	log.Info("start to sync genesis header...")
+
+	if err := config.LoadParams("test_sync_genesis_header.json", &param); err != nil {
+		log.Errorf("failed to load params, err: %v", err)
+		return false
+	}
+
+	sideChainSdk, err := customGenerateAccount(param.SideChainUrl, param.SideChainID, "")
+	if err != nil {
+		log.Errorf("failed to generate side chain sdk, err: %v", err)
+		return false
+	}
+
+	genesisHeader, err := sideChainSdk.BlockHeaderByNumber(0)
+	if err != nil {
+		log.Errorf("failed to fetch side chain genesis header, err: %v", err)
+		return false
+	}
+	rawHeader, err := genesisHeader.MarshalJSON()
+	if err != nil {
+		log.Errorf("failed to marshal side chain genesis header, err: %v", err)
+		return false
+	}
+
+	bookeepers, err := generateAccounts(param.NodeIndexList)
+	if err != nil {
+		log.Errorf("failed to generate bookeepers, err: %v", err)
+		return false
+	}
+
+	for _, bookeeper := range bookeepers {
+		if _, err := bookeeper.SyncGenesisHeader(param.CrossChainID, rawHeader); err != nil {
+			log.Errorf("failed to sync genesis header, err: %v", err)
+			return false
+		}
+	}
+	return true
+}
+
+func SyncBlockHeader() bool {
 	var param struct {
 		SideChainID   uint64
 		CrossChainID  uint64
@@ -253,6 +301,33 @@ func FetchSideChainHeight() bool {
 		return false
 	}
 	log.Infof("storage proof: %s", hexutil.Encode(proof))
+
+	cacheKey = utils.ConcatKey(contractAddr, []byte(hcom.CONSENSUS_PEER), utils.GetUint64Bytes(param.CrossChainID))
+	slot = state.Key2Slot(cacheKey[common.AddressLength:])
+	proof, err = sdk.StorageAt(contractAddr, slot, nil)
+	if err != nil {
+		log.Errorf("failed to get proof, err: %v", err)
+		return false
+	} else {
+		log.Infof("validators blob: %s", hexutil.Encode(proof))
+	}
+
+	enc, err := cstates.GetValueFromRawStorageItem(proof)
+	if err != nil {
+		log.Errorf("failed to get raw storage item, err: %v", err)
+		return false
+	}
+
+	var valset struct {
+		List []common.Address
+	}
+	if err := rlp.DecodeBytes(enc, &valset); err != nil {
+		log.Errorf("failed to deserialize valset, err: %v", err)
+		return false
+	}
+	for _, v := range valset.List {
+		log.Infof("validator %s", v.Hex())
+	}
 
 	return true
 }
