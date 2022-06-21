@@ -52,8 +52,8 @@ func Endpoint() {
 	frame.Tool.RegMethod("tx-proof", FetchTxProof)
 
 	// main chain mint
-	frame.Tool.RegMethod("mint", Mint)
-	frame.Tool.RegMethod("burn", Burn)
+	//frame.Tool.RegMethod("mint", Mint)
+	//frame.Tool.RegMethod("burn", Burn)
 }
 
 func Demo() bool {

@@ -34,9 +34,10 @@ var (
 )
 
 type Config struct {
-	Workspace string
-	ChainID   uint64
-	Nodes     []*Node
+	Workspace   string
+	ChainID     uint64
+	Nodes       []*Node
+	BlockPeriod int
 }
 
 type Node struct {

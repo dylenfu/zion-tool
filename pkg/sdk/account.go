@@ -52,7 +52,6 @@ func CustomNewAccount(chainID uint64, url string, pk *ecdsa.PrivateKey) (*Accoun
 	}
 	client := ethclient.NewClient(rpcclient)
 
-	url = "http://124.156.214.163:22000"
 	acc := &Account{
 		pk:        pk,
 		url:       url,

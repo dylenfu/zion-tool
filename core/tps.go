@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"github.com/ethereum/go-ethereum/params"
 	"math/big"
 	"time"
 
@@ -76,7 +77,7 @@ func TPS() bool {
 }
 
 func sendTransfer(acc *sdk.Account, to common.Address, txn int) {
-	var duration int = 5
+	var duration int = 15
 	txsNum := txn * duration
 	ticker := time.NewTicker(time.Duration(duration) * time.Second)
 
@@ -109,9 +110,9 @@ func generateMultiTestingAccounts(nodes []*config.Node, num int) ([]*sdk.Account
 }
 
 func prepareTestingAccountsBalance(master *sdk.Account, accounts []*sdk.Account, period, txn int) error {
-	amount := totalAmount(period, txn)
-	gas := totalGas(period, txn)
-	total := math.SafeAdd(amount, gas)
+	//amount := totalAmount(period, txn)
+	//gas := totalGas(period, txn)
+	total := new(big.Int).Mul(params.OneEth, big.NewInt(100))//math.SafeAdd(amount, gas)
 	balanceMap := make(map[string]*sdk.Account)
 	for idx := 0; idx < len(accounts); idx++ {
 		addr := accounts[idx].Address()
@@ -123,7 +124,7 @@ func prepareTestingAccountsBalance(master *sdk.Account, accounts []*sdk.Account,
 		balanceMap[addr.Hex()] = accounts[idx]
 	}
 
-	time.Sleep(5 * time.Second)
+	time.Sleep(15 * time.Second)
 
 retry:
 	for addr, account := range balanceMap {
@@ -189,7 +190,7 @@ func calculateTPS(master *sdk.Account, period int) {
 }
 
 var (
-	amountPerTx = big.NewInt(100000000000000) // 0.0001 eth
+	amountPerTx = big.NewInt(10000000000000) // 0.00001 eth
 	extraGas    = math.SafeMul(big.NewInt(1), ETH1)
 )
 

@@ -22,7 +22,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
-	"time"
+	//"time"
 
 	"github.com/dylenfu/zion-tool/config"
 	"github.com/dylenfu/zion-tool/pkg/log"
@@ -342,210 +342,210 @@ type CrossParam struct {
 	Amount        uint64
 	Relayer       bool
 }
-
-func Mint() bool {
-	log.Info("start to mint...")
-
-	param := new(CrossParam)
-	if err := config.LoadParams("test_cross_chain.json", param); err != nil {
-		log.Errorf("failed to load params, err: %v", err)
-		return false
-	}
-
-	amount := new(big.Int).Mul(ETH1, new(big.Int).SetUint64(param.Amount))
-	sender, err := masterAccount()
-	if err != nil {
-		log.Errorf("failed to generate sender account, err: %v", err)
-		return false
-	}
-
-	receiver, err := customGenerateAccount(param.SideChainUrl, param.SideChainID, param.NodeKey)
-	if err != nil {
-		log.Errorf("failed to generate receiver account, err: %v", err)
-		return false
-	}
-
-	receiverBalanceBeforeMint, err := dumpBalance(sender, receiver, sender.Address(), receiver.Address(), true)
-	if err != nil {
-		log.Errorf("failed to get balance, err: %v", err)
-		return false
-	}
-
-	// mint token on main chain
-	hash, err := sender.Mint(param.CrossChainID, receiver.Address(), amount)
-	if err != nil {
-		log.Errorf("failed to mint token, err: %v", err)
-		return false
-	}
-	log.Splitf("mint success, hash %s", hash.Hex())
-
-	// fetch receipt on main chain
-	log.Splitf("start to fetch params...")
-	receipt, err := sender.GetReceipt(hash)
-	if err != nil {
-		log.Errorf("failed to get receipt, err: %v", err)
-		return false
-	}
-
-	// assemble params for `verifyHeaderAndExecuteTx`
-	_, rawHeader, rawSeals, err := sender.GetRawHeaderAndSeals(receipt.BlockNumber.Uint64())
-	if err != nil {
-		log.Errorf("failed to get raw header and seals, err: %v", err)
-		return false
-	}
-
-	log.Infof("rawHeader: %s", hexutil.Encode(rawHeader))
-	log.Infof("rawSeals: %s", hexutil.Encode(rawSeals))
-
-	// get proof
-	accountProof, storageProof, merkelValue, err := mainChain2Proof(sender, receipt)
-	if err != nil {
-		log.Errorf("failed to get proof, err: %v", err)
-		return false
-	}
-	log.Splitf("account proof: %s", hexutil.Encode(accountProof))
-	log.Infof("storage proof: %s", hexutil.Encode(storageProof))
-	log.Infof("merkel value: %s", hexutil.Encode(merkelValue))
-
-	// return if we use relayer to commit proof
-	if param.Relayer {
-		return true
-	}
-
-	time.Sleep(3 * time.Second)
-	hash, err = receiver.SideChainVerifyHeaderAndExecute(
-		common.HexToAddress(param.SideChainECCM),
-		rawHeader, rawSeals,
-		accountProof, storageProof,
-		merkelValue,
-	)
-	if err != nil {
-		log.Errorf("failed to execute verifyHeaderAndExecute tx, err: %v", err)
-		return false
-	}
-	log.Splitf("verifyHeaderAndExecuteTx success, tx hash %s", hash.Hex())
-
-	time.Sleep(3 * time.Second)
-	receiverBalanceAfterMint, err := dumpBalance(sender, receiver, sender.Address(), receiver.Address(), true)
-	if err != nil {
-		log.Errorf("failed to get balance, err: %v", err)
-		return false
-	}
-
-	receiverAdded := new(big.Int).Sub(receiverBalanceAfterMint, receiverBalanceBeforeMint)
-	if receiverAdded.Cmp(amount) != 0 {
-		log.Errorf("receiver added != amount, (%s, %s)", receiverAdded.String(), amount.String())
-		return false
-	}
-	return true
-}
-
-func Burn() bool {
-	log.Info("start to burn...")
-
-	param := new(CrossParam)
-	if err := config.LoadParams("test_cross_chain.json", param); err != nil {
-		log.Errorf("failed to load params, err: %v", err)
-		return false
-	}
-
-	amount := new(big.Int).Mul(ETH1, new(big.Int).SetUint64(param.Amount))
-
-	sender, err := customGenerateAccount(param.SideChainUrl, param.SideChainID, param.NodeKey)
-	if err != nil {
-		log.Errorf("failed to generate receiver account, err: %v", err)
-		return false
-	}
-
-	receiver, err := masterAccount()
-	if err != nil {
-		log.Errorf("failed to generate sender account, err: %v", err)
-		return false
-	}
-
-	senderBalanceBeforeMint, err := sender.Balance(nil)
-	if err != nil {
-		log.Errorf("failed to get sender balance before mint, err: %v", err)
-	}
-	receiverBalanceBeforeMint, err := receiver.BalanceOf(sender.Address(), nil)
-	if err != nil {
-		log.Errorf("failed to get receiver balance before mint, err: %v", err)
-	}
-	lockProxyBalanceBeforeMint, err := receiver.BalanceOf(utils.LockProxyContractAddress, nil)
-	if err != nil {
-		log.Errorf("failed to get lock proxy balance before mint, err: %v", err)
-	}
-
-	// mint token on main chain
-	hash, err := sender.Burn(amount)
-	if err != nil {
-		log.Errorf("failed to burn token, err: %v", err)
-		return false
-	}
-	log.Splitf("burn success, hash %s", hash.Hex())
-
-	// fetch receipt on main chain
-	log.Splitf("start to fetch params...")
-	receipt, err := sender.GetReceipt(hash)
-	if err != nil {
-		log.Errorf("failed to get receipt, err: %v", err)
-		return false
-	}
-
-	// assemble params for `verifyHeaderAndExecuteTx`
-	header, err := sender.BlockHeaderByNumber(receipt.BlockNumber.Uint64())
-	if err != nil {
-		log.Errorf("failed to get header and seals, err: %v", err)
-		return false
-	}
-	rawHeader, err := header.MarshalJSON()
-	if err != nil {
-		log.Errorf("failed to encode raw header, err: %v", err)
-		return false
-	}
-	log.Infof("rawHeader: %s", hexutil.Encode(rawHeader))
-
-	// get proof
-	proof, txData, err := sideChainProof(sender, common.HexToAddress(param.SideChainECCD), receipt, nil)
-	if err != nil {
-		log.Errorf("failed to get proof, err: %v", err)
-		return false
-	}
-
-	height := uint32(header.Number.Uint64())
-	hash, err = receiver.ImportOutTransfer(param.CrossChainID, height, txData, proof, rawHeader)
-	if err != nil {
-		log.Errorf("failed to execute importOutTransfer, err: %v", err)
-		return false
-	} else {
-		log.Splitf("importOutTransfer success, tx hash %s", hash.Hex())
-	}
-
-	time.Sleep(3 * time.Second)
-	senderBalanceAfterMint, err := sender.Balance(nil)
-	if err != nil {
-		log.Errorf("failed to get sender balance before mint, err: %v", err)
-	}
-	receiverBalanceAfterMint, err := receiver.BalanceOf(sender.Address(), nil)
-	if err != nil {
-		log.Errorf("failed to get receiver balance before mint, err: %v", err)
-	}
-	lockProxyBalanceAfterMint, err := receiver.BalanceOf(utils.LockProxyContractAddress, nil)
-	if err != nil {
-		log.Errorf("failed to get lock proxy balance before mint, err: %v", err)
-	}
-
-	log.Splitf("sender balance before mint on side chain %s", senderBalanceBeforeMint.String())
-	log.Infof("sender balance after mint on side chain %s", senderBalanceAfterMint.String())
-
-	log.Splitf("receiver balance before mint on main chain %s", receiverBalanceBeforeMint.String())
-	log.Infof("receiver balance after mint on main chain %s", receiverBalanceAfterMint.String())
-
-	log.Splitf("lock proxy balance before mint on side chain %s", lockProxyBalanceBeforeMint.String())
-	log.Infof("lock proxy balance after mint on side chain %s", lockProxyBalanceAfterMint.String())
-
-	return true
-}
+//
+//func Mint() bool {
+//	log.Info("start to mint...")
+//
+//	param := new(CrossParam)
+//	if err := config.LoadParams("test_cross_chain.json", param); err != nil {
+//		log.Errorf("failed to load params, err: %v", err)
+//		return false
+//	}
+//
+//	amount := new(big.Int).Mul(ETH1, new(big.Int).SetUint64(param.Amount))
+//	sender, err := masterAccount()
+//	if err != nil {
+//		log.Errorf("failed to generate sender account, err: %v", err)
+//		return false
+//	}
+//
+//	receiver, err := customGenerateAccount(param.SideChainUrl, param.SideChainID, param.NodeKey)
+//	if err != nil {
+//		log.Errorf("failed to generate receiver account, err: %v", err)
+//		return false
+//	}
+//
+//	receiverBalanceBeforeMint, err := dumpBalance(sender, receiver, sender.Address(), receiver.Address(), true)
+//	if err != nil {
+//		log.Errorf("failed to get balance, err: %v", err)
+//		return false
+//	}
+//
+//	// mint token on main chain
+//	hash, err := sender.Mint(param.CrossChainID, receiver.Address(), amount)
+//	if err != nil {
+//		log.Errorf("failed to mint token, err: %v", err)
+//		return false
+//	}
+//	log.Splitf("mint success, hash %s", hash.Hex())
+//
+//	// fetch receipt on main chain
+//	log.Splitf("start to fetch params...")
+//	receipt, err := sender.GetReceipt(hash)
+//	if err != nil {
+//		log.Errorf("failed to get receipt, err: %v", err)
+//		return false
+//	}
+//
+//	// assemble params for `verifyHeaderAndExecuteTx`
+//	_, rawHeader, rawSeals, err := sender.GetRawHeaderAndSeals(receipt.BlockNumber.Uint64())
+//	if err != nil {
+//		log.Errorf("failed to get raw header and seals, err: %v", err)
+//		return false
+//	}
+//
+//	log.Infof("rawHeader: %s", hexutil.Encode(rawHeader))
+//	log.Infof("rawSeals: %s", hexutil.Encode(rawSeals))
+//
+//	// get proof
+//	accountProof, storageProof, merkelValue, err := mainChain2Proof(sender, receipt)
+//	if err != nil {
+//		log.Errorf("failed to get proof, err: %v", err)
+//		return false
+//	}
+//	log.Splitf("account proof: %s", hexutil.Encode(accountProof))
+//	log.Infof("storage proof: %s", hexutil.Encode(storageProof))
+//	log.Infof("merkel value: %s", hexutil.Encode(merkelValue))
+//
+//	// return if we use relayer to commit proof
+//	if param.Relayer {
+//		return true
+//	}
+//
+//	time.Sleep(3 * time.Second)
+//	hash, err = receiver.SideChainVerifyHeaderAndExecute(
+//		common.HexToAddress(param.SideChainECCM),
+//		rawHeader, rawSeals,
+//		accountProof, storageProof,
+//		merkelValue,
+//	)
+//	if err != nil {
+//		log.Errorf("failed to execute verifyHeaderAndExecute tx, err: %v", err)
+//		return false
+//	}
+//	log.Splitf("verifyHeaderAndExecuteTx success, tx hash %s", hash.Hex())
+//
+//	time.Sleep(3 * time.Second)
+//	receiverBalanceAfterMint, err := dumpBalance(sender, receiver, sender.Address(), receiver.Address(), true)
+//	if err != nil {
+//		log.Errorf("failed to get balance, err: %v", err)
+//		return false
+//	}
+//
+//	receiverAdded := new(big.Int).Sub(receiverBalanceAfterMint, receiverBalanceBeforeMint)
+//	if receiverAdded.Cmp(amount) != 0 {
+//		log.Errorf("receiver added != amount, (%s, %s)", receiverAdded.String(), amount.String())
+//		return false
+//	}
+//	return true
+//}
+//
+//func Burn() bool {
+//	log.Info("start to burn...")
+//
+//	param := new(CrossParam)
+//	if err := config.LoadParams("test_cross_chain.json", param); err != nil {
+//		log.Errorf("failed to load params, err: %v", err)
+//		return false
+//	}
+//
+//	amount := new(big.Int).Mul(ETH1, new(big.Int).SetUint64(param.Amount))
+//
+//	sender, err := customGenerateAccount(param.SideChainUrl, param.SideChainID, param.NodeKey)
+//	if err != nil {
+//		log.Errorf("failed to generate receiver account, err: %v", err)
+//		return false
+//	}
+//
+//	receiver, err := masterAccount()
+//	if err != nil {
+//		log.Errorf("failed to generate sender account, err: %v", err)
+//		return false
+//	}
+//
+//	senderBalanceBeforeMint, err := sender.Balance(nil)
+//	if err != nil {
+//		log.Errorf("failed to get sender balance before mint, err: %v", err)
+//	}
+//	receiverBalanceBeforeMint, err := receiver.BalanceOf(sender.Address(), nil)
+//	if err != nil {
+//		log.Errorf("failed to get receiver balance before mint, err: %v", err)
+//	}
+//	lockProxyBalanceBeforeMint, err := receiver.BalanceOf(utils.LockProxyContractAddress, nil)
+//	if err != nil {
+//		log.Errorf("failed to get lock proxy balance before mint, err: %v", err)
+//	}
+//
+//	// mint token on main chain
+//	hash, err := sender.Burn(amount)
+//	if err != nil {
+//		log.Errorf("failed to burn token, err: %v", err)
+//		return false
+//	}
+//	log.Splitf("burn success, hash %s", hash.Hex())
+//
+//	// fetch receipt on main chain
+//	log.Splitf("start to fetch params...")
+//	receipt, err := sender.GetReceipt(hash)
+//	if err != nil {
+//		log.Errorf("failed to get receipt, err: %v", err)
+//		return false
+//	}
+//
+//	// assemble params for `verifyHeaderAndExecuteTx`
+//	header, err := sender.BlockHeaderByNumber(receipt.BlockNumber.Uint64())
+//	if err != nil {
+//		log.Errorf("failed to get header and seals, err: %v", err)
+//		return false
+//	}
+//	rawHeader, err := header.MarshalJSON()
+//	if err != nil {
+//		log.Errorf("failed to encode raw header, err: %v", err)
+//		return false
+//	}
+//	log.Infof("rawHeader: %s", hexutil.Encode(rawHeader))
+//
+//	// get proof
+//	proof, txData, err := sideChainProof(sender, common.HexToAddress(param.SideChainECCD), receipt, nil)
+//	if err != nil {
+//		log.Errorf("failed to get proof, err: %v", err)
+//		return false
+//	}
+//
+//	height := uint32(header.Number.Uint64())
+//	hash, err = receiver.ImportOutTransfer(param.CrossChainID, height, txData, proof, rawHeader)
+//	if err != nil {
+//		log.Errorf("failed to execute importOutTransfer, err: %v", err)
+//		return false
+//	} else {
+//		log.Splitf("importOutTransfer success, tx hash %s", hash.Hex())
+//	}
+//
+//	time.Sleep(3 * time.Second)
+//	senderBalanceAfterMint, err := sender.Balance(nil)
+//	if err != nil {
+//		log.Errorf("failed to get sender balance before mint, err: %v", err)
+//	}
+//	receiverBalanceAfterMint, err := receiver.BalanceOf(sender.Address(), nil)
+//	if err != nil {
+//		log.Errorf("failed to get receiver balance before mint, err: %v", err)
+//	}
+//	lockProxyBalanceAfterMint, err := receiver.BalanceOf(utils.LockProxyContractAddress, nil)
+//	if err != nil {
+//		log.Errorf("failed to get lock proxy balance before mint, err: %v", err)
+//	}
+//
+//	log.Splitf("sender balance before mint on side chain %s", senderBalanceBeforeMint.String())
+//	log.Infof("sender balance after mint on side chain %s", senderBalanceAfterMint.String())
+//
+//	log.Splitf("receiver balance before mint on main chain %s", receiverBalanceBeforeMint.String())
+//	log.Infof("receiver balance after mint on main chain %s", receiverBalanceAfterMint.String())
+//
+//	log.Splitf("lock proxy balance before mint on side chain %s", lockProxyBalanceBeforeMint.String())
+//	log.Infof("lock proxy balance after mint on side chain %s", lockProxyBalanceAfterMint.String())
+//
+//	return true
+//}
 
 func mainChain2Proof(mainChainSdk *sdk.Account, receipt *types.Receipt) ([]byte, []byte, []byte, error) {
 	if len(receipt.Logs) != 3 {

@@ -20,14 +20,14 @@ package sdk
 
 import (
 	"fmt"
-	"math/big"
+	//"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/contracts/native"
-	scom "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/common"
-	mlp "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/zion/mainchain/lock_proxy"
-	slp "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/zion/sidechain/lock_proxy"
+	//"github.com/ethereum/go-ethereum/contracts/native"
+	//scom "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/common"
+	//mlp "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/zion/mainchain/lock_proxy"
+	//slp "github.com/ethereum/go-ethereum/contracts/native/cross_chain_manager/zion/sidechain/lock_proxy"
 	"github.com/ethereum/go-ethereum/contracts/native/utils"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -35,37 +35,37 @@ import (
 )
 
 func init() {
-	mlp.InitABI()
-	slp.InitABI()
+	//mlp.InitABI()
+	//slp.InitABI()
 }
-
-func (c *Account) Mint(targetCrossChainID uint64, to common.Address, amount *big.Int) (common.Hash, error) {
-	input := &mlp.MethodLockInput{
-		ToChainId: targetCrossChainID,
-		ToAddress: to,
-		Amount:    amount,
-	}
-	payload, err := input.Encode()
-	if err != nil {
-		return common.EmptyHash, err
-	}
-
-	return c.sendLockProxyTx(payload, amount)
-}
-
-func (c *Account) Burn(amount *big.Int) (common.Hash, error) {
-	input := &slp.MethodBurnInput{
-		ToChainId: native.ZionMainChainID,
-		Amount:    amount,
-	}
-
-	payload, err := input.Encode()
-	if err != nil {
-		return common.EmptyHash, err
-	}
-
-	return c.sendLockProxyTx(payload, amount)
-}
+//
+//func (c *Account) Mint(targetCrossChainID uint64, to common.Address, amount *big.Int) (common.Hash, error) {
+//	input := &mlp.MethodLockInput{
+//		ToChainId: targetCrossChainID,
+//		ToAddress: to,
+//		Amount:    amount,
+//	}
+//	payload, err := input.Encode()
+//	if err != nil {
+//		return common.EmptyHash, err
+//	}
+//
+//	return c.sendLockProxyTx(payload, amount)
+//}
+//
+//func (c *Account) Burn(amount *big.Int) (common.Hash, error) {
+//	input := &slp.MethodBurnInput{
+//		ToChainId: native.ZionMainChainID,
+//		Amount:    amount,
+//	}
+//
+//	payload, err := input.Encode()
+//	if err != nil {
+//		return common.EmptyHash, err
+//	}
+//
+//	return c.sendLockProxyTx(payload, amount)
+//}
 
 //state := &nccmc.EntranceParam{
 //	SourceChainID:         sourceChainId,
@@ -75,23 +75,24 @@ func (c *Account) Burn(amount *big.Int) (common.Hash, error) {
 //	Extra:                 txData,
 //	HeaderOrCrossChainMsg: HeaderOrCrossChainMsg,
 //}
-func (c *Account) ImportOutTransfer(sourceChainID uint64, height uint32, txData, proof, rawHeader []byte) (common.Hash, error) {
-	relayerAddr := c.address[:]
-	payload, err := utils.PackMethod(scom.ABI, scom.MethodImportOuterTransfer, sourceChainID, height, proof, relayerAddr, txData, rawHeader)
-	if err != nil {
-		return common.EmptyHash, err
-	}
+//
+//func (c *Account) ImportOutTransfer(sourceChainID uint64, height uint32, txData, proof, rawHeader []byte) (common.Hash, error) {
+//	relayerAddr := c.address[:]
+//	payload, err := utils.PackMethod(scom.ABI, scom.MethodImportOuterTransfer, sourceChainID, height, proof, relayerAddr, txData, rawHeader)
+//	if err != nil {
+//		return common.EmptyHash, err
+//	}
+//
+//	return c.signAndSendTx(payload, utils.CrossChainManagerContractAddress)
+//}
 
-	return c.signAndSendTx(payload, utils.CrossChainManagerContractAddress)
-}
-
-func (c *Account) sendLockProxyTx(payload []byte, amount *big.Int) (common.Hash, error) {
-	return c.signAndSendTxWithValue(payload, amount, utils.LockProxyContractAddress)
-}
-
-func (c *Account) callLockProxy(payload []byte, blockNum *big.Int) ([]byte, error) {
-	return c.CallContract(c.Address(), utils.LockProxyContractAddress, payload, blockNum)
-}
+//func (c *Account) sendLockProxyTx(payload []byte, amount *big.Int) (common.Hash, error) {
+//	return c.signAndSendTxWithValue(payload, amount, utils.LockProxyContractAddress)
+//}
+//
+//func (c *Account) callLockProxy(payload []byte, blockNum *big.Int) ([]byte, error) {
+//	return c.CallContract(c.Address(), utils.LockProxyContractAddress, payload, blockNum)
+//}
 
 func (c *Account) GetRawHeaderAndSeals(number uint64) (*types.Header, []byte, []byte, error) {
 	header, err := c.BlockHeaderByNumber(number)
