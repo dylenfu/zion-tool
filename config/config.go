@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"strings"
+	"time"
 
 	"github.com/dylenfu/zion-tool/pkg/files"
 	"github.com/ethereum/go-ethereum/common"
@@ -38,6 +39,10 @@ type Config struct {
 	ChainID     uint64
 	Nodes       []*Node
 	BlockPeriod int
+}
+
+func (c *Config) BlockWaitingTime() time.Duration {
+	return time.Second * time.Duration(c.BlockPeriod + 1)
 }
 
 type Node struct {

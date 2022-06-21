@@ -28,8 +28,6 @@ import (
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
-var BlockWaitingTime = time.Second * time.Duration(config.Conf.BlockPeriod + 1)
-
 // propose new epoch and vote until success
 func Epoch() bool {
 	var param struct {
@@ -66,7 +64,7 @@ func Epoch() bool {
 	}
 	log.Splitf("validator %s propose, hash %s", proposer.Address().Hex(), tx.Hex())
 
-	time.Sleep(BlockWaitingTime)
+	time.Sleep(config.Conf.BlockWaitingTime())
 	epoch, err := getProposalReceipt(proposer, tx)
 	if err != nil {
 		log.Errorf("failed to get proposal receipt, err: %v", err)
@@ -85,8 +83,7 @@ func Epoch() bool {
 			proposer.Transfer(voter.Address(), ETH1)
 		}
 	}
-	time.Sleep(BlockWaitingTime)
-	log.Splitf("voter length %d", len(voters))
+	time.Sleep(config.Conf.BlockWaitingTime())
 
 	epochHash := epoch.Hash()
 	curEpoch, err := voters[0].Epoch()
@@ -102,7 +99,7 @@ func Epoch() bool {
 		} else {
 			log.Infof("voter %s voted, hash %s", voter.Address().Hex(), tx.Hex())
 		}
-		time.Sleep(BlockWaitingTime)
+		time.Sleep(config.Conf.BlockWaitingTime())
 	}
 
 	return true
