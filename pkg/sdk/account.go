@@ -3,13 +3,18 @@ package sdk
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strings"
 	"sync"
+	"time"
 
+	"github.com/dylenfu/zion-tool/pkg/log"
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -27,7 +32,7 @@ var (
 type Account struct {
 	signer    types.EIP155Signer
 	pk        *ecdsa.PrivateKey
-	address   common.Address
+	addr      common.Address
 	url       string
 	client    *ethclient.Client
 	rpcClient *rpc.Client
@@ -67,7 +72,7 @@ func CustomNewAccount(chainID uint64, url string, pk *ecdsa.PrivateKey) (*Accoun
 			return nil, err
 		}
 		acc.signer = signer
-		acc.address = address
+		acc.addr = address
 		acc.nonce = curNonce
 		acc.nonceMu = new(sync.RWMutex)
 	}
@@ -75,8 +80,8 @@ func CustomNewAccount(chainID uint64, url string, pk *ecdsa.PrivateKey) (*Accoun
 	return acc, nil
 }
 
-func (c *Account) Address() common.Address {
-	return c.address
+func (c *Account) Addr() common.Address {
+	return c.addr
 }
 
 func (c *Account) Url() string {
@@ -84,7 +89,7 @@ func (c *Account) Url() string {
 }
 
 func (c *Account) Balance(blockNum *big.Int) (*big.Int, error) {
-	return c.client.BalanceAt(context.Background(), c.address, blockNum)
+	return c.client.BalanceAt(context.Background(), c.addr, blockNum)
 }
 
 func (c *Account) BalanceOf(addr common.Address, blockNum *big.Int) (*big.Int, error) {
@@ -119,7 +124,7 @@ func (c *Account) NewUnsignedTx(to common.Address, amount *big.Int, data []byte)
 	}
 
 	callMsg := ethereum.CallMsg{
-		From:     c.Address(),
+		From:     c.Addr(),
 		To:       &to,
 		Gas:      0,
 		GasPrice: gasPrice,
@@ -243,6 +248,135 @@ func (c *Account) signAndSendTxWithValue(payload []byte, amount *big.Int, contra
 		return hash, err
 	}
 	return hash, nil
+}
+
+func (c *Account) SendTransaction(contractAddr common.Address, payload []byte) (common.Hash, error) {
+	addr := c.Addr()
+
+	nonce := c.GetNonce(addr.Hex())
+	if c.nonce < nonce {
+		c.nonce = nonce
+	}
+	log.Debugf("%s current nonce %d, valid nonce %d", addr.Hex(), c.nonce, nonce)
+	tx := types.NewTransaction(
+		c.nonce,
+		contractAddr,
+		big.NewInt(0),
+		gasLimit,
+		big.NewInt(2000000000),
+		payload,
+	)
+	hash := tx.Hash()
+
+	signedTx, err := c.SignTransaction(tx)
+	if err != nil {
+		return hash, err
+	}
+	c.nonce += 1
+	return c.SendRawTransaction(hash, signedTx)
+}
+
+func (c *Account) SignTransaction(tx *types.Transaction) (string, error) {
+
+	signer := types.EIP155Signer{}
+	signedTx, err := types.SignTx(
+		tx,
+		signer,
+		c.pk,
+	)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign tx: [%v]", err)
+	}
+
+	bz, err := rlp.EncodeToBytes(signedTx)
+	if err != nil {
+		return "", fmt.Errorf("failed to rlp encode bytes: [%v]", err)
+	}
+	return "0x" + hex.EncodeToString(bz), nil
+}
+
+func (c *Account) SendRawTransaction(hash common.Hash, signedTx string) (common.Hash, error) {
+	var result common.Hash
+	if err := c.rpcClient.Call(&result, "eth_sendRawTransaction", signedTx); err != nil {
+		return hash, fmt.Errorf("failed to send raw transaction: [%v]", err)
+	}
+
+	return result, nil
+}
+
+func (c *Account) SendTransactionAndDumpEvent(contract common.Address, payload []byte) error {
+	hash, err := c.SendTransaction(contract, payload)
+	if err != nil {
+		return err
+	}
+	time.Sleep(2)
+	return c.DumpEventLog(hash)
+}
+
+func (c *Account) WaitTransaction(hash common.Hash) error {
+	for {
+		time.Sleep(time.Second * 1)
+		_, ispending, err := c.client.TransactionByHash(context.Background(), hash)
+		if err != nil {
+			log.Errorf("failed to call TransactionByHash: %v", err)
+			continue
+		}
+		if ispending == true {
+			continue
+		}
+
+		if err := c.DumpEventLog(hash); err != nil {
+			return err
+		}
+		break
+	}
+	return nil
+}
+
+func (c *Account) GetNonce(address string) uint64 {
+	var raw string
+
+	if err := c.rpcClient.Call(
+		&raw,
+		"eth_getTransactionCount",
+		address,
+		"latest",
+	); err != nil {
+		panic(fmt.Errorf("failed to get nonce: [%v]", err))
+	}
+
+	without0xStr := strings.Replace(raw, "0x", "", -1)
+	bigNonce, _ := new(big.Int).SetString(without0xStr, 16)
+	return bigNonce.Uint64()
+}
+
+func (c *Account) DumpEventLog(hash common.Hash) error {
+	raw, err := c.GetReceipt(hash)
+	if err != nil {
+		return fmt.Errorf("faild to get receipt %s", hash.Hex())
+	}
+
+	if raw.Status == 0 {
+		return fmt.Errorf("receipt failed %s", hash.Hex())
+	}
+
+	log.Infof("txhash %s, block height %d", hash.Hex(), raw.BlockNumber.Uint64())
+	for _, event := range raw.Logs {
+		log.Infof("eventlog addr %s", event.Address.Hex())
+		log.Infof("eventlog data %s", hexutil.Encode(event.Data))
+		for i, topic := range event.Topics {
+			log.Infof("eventlog topic[%d] %s", i, topic.String())
+		}
+	}
+	return nil
+}
+
+func (c *Account) GetReceipt(hash common.Hash) (*types.Receipt, error) {
+	raw := &types.Receipt{}
+	if err := c.rpcClient.Call(raw, "eth_getTransactionReceipt", hash.Hex()); err != nil {
+		return nil, err
+	}
+	return raw, nil
 }
 
 func AddGasPrice(inc uint64) {

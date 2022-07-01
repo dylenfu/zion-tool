@@ -24,6 +24,8 @@ import (
 	"github.com/dylenfu/zion-tool/config"
 	"github.com/dylenfu/zion-tool/pkg/log"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 func Transfer() bool {
@@ -57,7 +59,7 @@ func Transfer() bool {
 			log.Errorf("failed to transfer eth, err: %v", err)
 			return false
 		} else {
-			log.Infof("%s transfer %s to %s, tx hash %s", acc.Address().Hex(), amount.String(), to.Hex(), tx.Hex())
+			log.Infof("%s transfer %s to %s, tx hash %s", acc.Addr().Hex(), amount.String(), to.Hex(), tx.Hex())
 		}
 
 		balanceAfterTransfer, err := acc.BalanceOf(to, nil)
@@ -75,5 +77,39 @@ func Transfer() bool {
 		log.Split()
 	}
 
+	return true
+}
+
+func Header() bool {
+	var param struct {
+		Height uint64
+	}
+
+	if err := config.LoadParams("test_header.json", &param); err != nil {
+		log.Errorf("failed to load params, err: %v", err)
+		return false
+	}
+
+	cli, err := masterAccount()
+	if err != nil {
+		log.Errorf("failed to generate client, err: %v", err)
+		return false
+	}
+
+	header, err := cli.BlockHeaderByNumber(param.Height)
+	if err != nil {
+		log.Errorf("failed to get header, err: %v", err)
+		return false
+	}
+	blob, err := header.MarshalJSON()
+	if err != nil {
+		log.Errorf("failed to marshal header, err: %v", err)
+		return false
+	}
+	if err := new(types.Header).UnmarshalJSON(blob); err != nil {
+		log.Errorf("failed to unmarshal header, err: %v", err)
+		return false
+	}
+	log.Infof("header json and hexutil format: %s", hexutil.Encode(blob))
 	return true
 }

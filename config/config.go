@@ -20,6 +20,7 @@ package config
 import (
 	"crypto/ecdsa"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"strings"
 	"time"
@@ -39,48 +40,48 @@ type Config struct {
 	ChainID     uint64
 	Nodes       []*Node
 	BlockPeriod int
+	InitBalance int
 }
 
 func (c *Config) BlockWaitingTime() time.Duration {
-	return time.Second * time.Duration(c.BlockPeriod + 1)
+	return time.Second * time.Duration(c.BlockPeriod+1)
 }
 
 type Node struct {
-	NodeKey    string            `json:"NodeKey"`
-	Url        string            `json:"Url"`
-	Address    common.Address    `json:"Address,omitempty"`
-	PrivateKey *ecdsa.PrivateKey `json:"PrivateKey,omitempty"`
-	PublicKey  *ecdsa.PublicKey  `json:"PublicKey,omitempty"`
+	NodeKey         string            `json:"NodeKey"`
+	Url             string            `json:"Url"`
+	StakeKey        string            `json:"StakeKey"`
+	Address         common.Address    `json:"Address,omitempty"`
+	PrivateKey      *ecdsa.PrivateKey `json:"PrivateKey,omitempty"`
+	PublicKey       *ecdsa.PublicKey  `json:"PublicKey,omitempty"`
+	StakeAddr       common.Address    `json:"StakeAddr,omitempty"`
+	StakePrivateKey *ecdsa.PrivateKey `json:"StakePrivateKey,omitempty"`
+	StakePublicKey  *ecdsa.PublicKey  `json:"StakePublicKey,omitempty"`
 }
 
 func LoadConfig(filepath string) {
-	data, err := files.ReadFile(filepath)
-	if err != nil {
+	var (
+		data []byte
+		err  error
+	)
+
+	if data, err = files.ReadFile(filepath); err != nil {
+		panic(err)
+	}
+	if err = json.Unmarshal(data, &Conf); err != nil {
 		panic(err)
 	}
 
-	if err := json.Unmarshal(data, &Conf); err != nil {
-		panic(err)
-	}
-
-	for _, v := range Conf.Nodes {
-		key := v.NodeKey
-		if !strings.Contains(key, "0x") {
-			key = "0x" + key
-		}
-
-		enc, err := hexutil.Decode(key)
+	for index, v := range Conf.Nodes {
+		v.PrivateKey, v.PublicKey, v.Address, err = ParsePrivateHex(v.NodeKey)
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("node key invalid, index %d, err: %v", index, err))
 		}
 
-		privKey, err := crypto.ToECDSA(enc)
+		v.StakePrivateKey, v.StakePublicKey, v.StakeAddr, err = ParsePrivateHex(v.StakeKey)
 		if err != nil {
-			panic(err)
+			panic(fmt.Sprintf("stake key invalid, index %d, err: %v", index, err))
 		}
-		v.PrivateKey = privKey
-		v.PublicKey = &privKey.PublicKey
-		v.Address = crypto.PubkeyToAddress(*v.PublicKey)
 	}
 }
 
@@ -91,4 +92,22 @@ func LoadParams(fileName string, data interface{}) error {
 		return err
 	}
 	return json.Unmarshal(bz, data)
+}
+
+func ParsePrivateHex(data string) (*ecdsa.PrivateKey, *ecdsa.PublicKey, common.Address, error) {
+	key := data
+	if !strings.Contains(key, "0x") {
+		key = "0x" + key
+	}
+
+	enc, err := hexutil.Decode(key)
+	if err != nil {
+		return nil, nil, common.Address{}, err
+	}
+
+	pk, err := crypto.ToECDSA(enc)
+	if err != nil {
+		return nil, nil, common.Address{}, err
+	}
+	return pk, &pk.PublicKey, crypto.PubkeyToAddress(pk.PublicKey), nil
 }

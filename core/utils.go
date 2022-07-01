@@ -2,17 +2,21 @@ package core
 
 import (
 	"fmt"
+	"math/big"
+	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/contracts/native/utils"
-	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/dylenfu/zion-tool/config"
+	"github.com/dylenfu/zion-tool/pkg/log"
 	"github.com/dylenfu/zion-tool/pkg/sdk"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	. "github.com/ethereum/go-ethereum/contracts/native/go_abi/node_manager_abi"
-	nm "github.com/ethereum/go-ethereum/contracts/native/governance/node_manager"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/params"
 )
+
+var ETH1 = params.ZNT1
+
+type Account struct {
+	*config.Node
+	*sdk.Account
+}
 
 func masterAccount() (*sdk.Account, error) {
 	chainID := config.Conf.ChainID
@@ -20,40 +24,13 @@ func masterAccount() (*sdk.Account, error) {
 	return sdk.CustomNewAccount(chainID, node.Url, node.PrivateKey)
 }
 
-func generateAccount(index int) (*sdk.Account, error) {
-	chainID := config.Conf.ChainID
-	if index >= len(config.Conf.Nodes) {
-		return nil, fmt.Errorf("node index out of range")
-	}
-	node := config.Conf.Nodes[index]
-	return sdk.CustomNewAccount(chainID, node.Url, node.PrivateKey)
-}
-
-func customGenerateAccount(url string, chainID uint64, nodeKey string) (*sdk.Account, error) {
-	if nodeKey == "" {
-		return sdk.NewAccount(chainID, url)
-	}
-	blob, err := hexutil.Decode(nodeKey)
-	if err != nil {
-		return nil, err
-	}
-	pk, err := crypto.ToECDSA(blob)
-	if err != nil {
-		return nil, err
-	}
-	return sdk.CustomNewAccount(chainID, url, pk)
-}
-
-func generateAccounts(indexList []int) ([]*sdk.Account, error) {
-	chainID := config.Conf.ChainID
-	nodes := config.Conf.Nodes
-	list := make([]*sdk.Account, 0)
+func generateAccounts(indexList []int) ([]*Account, error) {
+	list := make([]*Account, 0)
 	for _, index := range indexList {
-		if index >= len(nodes) {
+		if index >= len(config.Conf.Nodes) {
 			return nil, fmt.Errorf("node index out of range")
 		}
-		node := nodes[index]
-		acc, err := sdk.CustomNewAccount(chainID, node.Url, node.PrivateKey)
+		acc, err := generateAccount(index)
 		if err != nil {
 			return nil, err
 		}
@@ -62,35 +39,49 @@ func generateAccounts(indexList []int) ([]*sdk.Account, error) {
 	return list, nil
 }
 
-func getPeers(nodeIndexList []int) (*nm.Peers, error) {
-	list := make([]*nm.PeerInfo, 0)
-	nodes := config.Conf.Nodes
-	for _, index := range nodeIndexList {
-		if index >= len(nodes) {
-			return nil, fmt.Errorf("node index out of range")
-		}
-		node := nodes[index]
-		pubkey := hexutil.Encode(crypto.CompressPubkey(node.PublicKey))
-		list = append(list, &nm.PeerInfo{PubKey: pubkey, Address: node.Address})
+func generateAccount(index int) (*Account, error) {
+	chainID := config.Conf.ChainID
+	if index >= len(config.Conf.Nodes) {
+		return nil, fmt.Errorf("node index out of range")
 	}
-	return &nm.Peers{List: list}, nil
+	node := config.Conf.Nodes[index]
+	acc, err := sdk.CustomNewAccount(chainID, node.Url, node.StakePrivateKey)
+	if err != nil {
+		return nil, err
+	}
+	return &Account{
+		Node:    node,
+		Account: acc,
+	}, nil
 }
 
-func getProposalReceipt(proposer *sdk.Account, tx common.Hash) (*nm.EpochInfo, error) {
-	receipt, err := proposer.GetReceipt(tx)
+func prepareBalance() error {
+	amount := big.NewInt(int64(config.Conf.InitBalance))
+	master, err := masterAccount()
 	if err != nil {
-		return nil, err
-	}
-	event := receipt.Logs[0].Data
-	list, err := utils.UnpackEvent(*nm.ABI, EventProposed, event)
-	if err != nil {
-		return nil, err
+		return err
 	}
 
-	dec := list[0].([]byte)
-	var epoch *nm.EpochInfo
-	if err := rlp.DecodeBytes(dec, &epoch); err != nil {
-		return nil, err
+	// the first one is master account
+	for i := 0; i < len(config.Conf.Nodes); i++ {
+		addr := config.Conf.Nodes[i].StakeAddr
+		balance, err := master.BalanceOf(addr, nil)
+		if err != nil {
+			return err
+		}
+		if balance.Cmp(amount) >= 0 {
+			continue
+		}
+		added := new(big.Int).Sub(amount, balance)
+		if _, err := master.Transfer(addr, added); err != nil {
+			return err
+		} else {
+			log.Infof("prepare balance %v, added %v", amount, added)
+		}
 	}
-	return epoch, nil
+	return nil
+}
+
+func wait() {
+	time.Sleep(config.Conf.BlockWaitingTime())
 }

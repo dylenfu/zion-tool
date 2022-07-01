@@ -9,4 +9,7 @@ require (
 	github.com/urfave/cli v1.22.4
 )
 
-replace github.com/ethereum/go-ethereum v1.10.14 => ../Zion
+replace (
+	github.com/ethereum/go-ethereum v1.10.14 => ../Zion
+	github.com/tendermint/tm-db/064 => github.com/tendermint/tm-db v0.6.4
+)

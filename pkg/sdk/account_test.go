@@ -20,12 +20,12 @@ package sdk
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum"
 	"math/big"
 	"os"
 	"testing"
 
 	"github.com/dylenfu/zion-tool/pkg/math"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -33,9 +33,9 @@ import (
 )
 
 var (
-	testUrl                = "http://49.234.146.144:8545"
+	testUrl                = "http://127.0.0.1:22000"
 	testMainNodeKey        = "4b0c9b9d685db17ac9f295cb12f9d7d2369f5bf524b3ce52ce424031cafda1ae"
-	testChainID     uint64 = 1002
+	testChainID     uint64 = 60801
 	master          *Account
 	testEth1        = math.Pow10toBigInt(18)
 )
@@ -43,7 +43,6 @@ var (
 func TestMain(m *testing.M) {
 	privKey, _ := crypto.HexToECDSA(testMainNodeKey)
 	master, _ = CustomNewAccount(testChainID, testUrl, privKey)
-	GetNeoProofABI()
 	os.Exit(m.Run())
 }
 
@@ -56,7 +55,7 @@ func TestTransfer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("master %s transfer %v to %s, hash %s", master.Address(), amount, to.Hex(), hash.Hex())
+	t.Logf("master %s transfer %v to %s, hash %s", master.Addr(), amount, to.Hex(), hash.Hex())
 }
 
 func TestGetBlock(t *testing.T) {
@@ -138,9 +137,9 @@ func TestEstimateTx(t *testing.T) {
 }
 
 func estimate(s *Account, txhash common.Hash, from common.Address) error {
-	tx, _,  err := s.client.TransactionByHash(context.Background(), txhash)
+	tx, _, err := s.client.TransactionByHash(context.Background(), txhash)
 	if err != nil {
-		return  err
+		return err
 	}
 
 	args := ethereum.CallMsg{
@@ -153,7 +152,7 @@ func estimate(s *Account, txhash common.Hash, from common.Address) error {
 		AccessList: tx.AccessList(),
 	}
 	if _, err := s.client.EstimateGas(context.Background(), args); err != nil {
-		return  err
+		return err
 	}
 	return nil
 }
@@ -169,7 +168,7 @@ func (c *Account) CustomEstimate(tx *types.Transaction, from common.Address, blo
 		AccessList: tx.AccessList(),
 	}
 	if _, err := c.client.EstimateGas(context.Background(), args); err != nil {
-		return  err
+		return err
 	}
 	return nil
 }
