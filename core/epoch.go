@@ -53,6 +53,12 @@ func Register() bool {
 	log.Split("start to register nodes")
 	stakeAmt := big.NewInt(int64(param.StakeAmount))
 	for _, v := range vals {
+		balance, err := v.Balance(nil)
+		if err != nil {
+			return false
+		} else {
+			log.Infof("stake account %s balance %v", v.Addr().Hex(), balance)
+		}
 		if _, err := v.Register(v.PublicKey, stakeAmt, v.StakeAddr.Hex()); err != nil {
 			log.Errorf("failed to register account, err: %v", err)
 			return false

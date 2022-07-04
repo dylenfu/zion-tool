@@ -76,7 +76,7 @@ func prepareBalance() error {
 		if _, err := master.Transfer(addr, added); err != nil {
 			return err
 		} else {
-			log.Infof("prepare balance %v, added %v", amount, added)
+			log.Infof("prepare %v balance %v, added %v", addr.Hex(), amount, added)
 		}
 	}
 	return nil
