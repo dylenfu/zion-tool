@@ -51,7 +51,7 @@ func Register() bool {
 	}
 
 	log.Split("start to register nodes")
-	stakeAmt := big.NewInt(int64(param.StakeAmount))
+	stakeAmt := new(big.Int).Mul(big.NewInt(int64(param.StakeAmount)), ETH1)
 	for _, v := range vals {
 		balance, err := v.Balance(nil)
 		if err != nil {

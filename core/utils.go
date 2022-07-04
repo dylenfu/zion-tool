@@ -56,7 +56,7 @@ func generateAccount(index int) (*Account, error) {
 }
 
 func prepareBalance() error {
-	amount := big.NewInt(int64(config.Conf.InitBalance))
+	amount := new(big.Int).Mul(big.NewInt(int64(config.Conf.InitBalance)), ETH1)
 	master, err := masterAccount()
 	if err != nil {
 		return err
@@ -68,6 +68,8 @@ func prepareBalance() error {
 		balance, err := master.BalanceOf(addr, nil)
 		if err != nil {
 			return err
+		} else {
+			log.Infof("stake addr %v, balance %v", addr.Hex(), balance)
 		}
 		if balance.Cmp(amount) >= 0 {
 			continue
