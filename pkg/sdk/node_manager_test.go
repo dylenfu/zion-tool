@@ -42,6 +42,18 @@ func nodeKeys() []string {
 	}
 }
 
+func stakeKeys() []string {
+	return []string{
+		"e2fad9ef77f3ed8d130e6cb5e9f46ba36990ec699a7fec7aef97c03781c0cd1f",
+	}
+}
+
+func getStakeKey(n int) *ecdsa.PrivateKey {
+	keys := stakeKeys()
+	pk, _ := crypto.HexToECDSA(keys[n])
+	return pk
+}
+
 func getPrivateKey(n int) *ecdsa.PrivateKey {
 	keys := nodeKeys()
 	pk, _ := crypto.HexToECDSA(keys[n])
@@ -50,6 +62,11 @@ func getPrivateKey(n int) *ecdsa.PrivateKey {
 
 func getTestAccount(index int) *Account {
 	acc, _ := CustomNewAccount(testChainID, testUrl, getPrivateKey(index))
+	return acc
+}
+
+func getStakeAccount() *Account {
+	acc, _ := CustomNewAccount(testChainID, testUrl, getStakeKey(0))
 	return acc
 }
 
@@ -68,8 +85,8 @@ func TestGetEpoch(t *testing.T) {
 	}
 	t.Log("id", epoch.ID)
 	t.Log("start", epoch.StartHeight)
-	for index, v := range epoch.Validators {
-		t.Log("index", index, v.Address.Hex())
+	for index, addr := range epoch.Validators {
+		t.Log("index", index, addr.Hex())
 	}
 }
 
@@ -88,7 +105,7 @@ func TestRegister(t *testing.T) {
 	} else {
 		t.Log("addr", stakeAcc.Addr().Hex(), "balance", balance)
 	}
-	if _, err := stakeAcc.Register(&master.pk.PublicKey, amount, "test1"); err != nil {
+	if _, err := stakeAcc.Register(master.Addr(), amount, "test1"); err != nil {
 		t.Error(err)
 	}
 }
@@ -101,7 +118,7 @@ func TestStake(t *testing.T) {
 		t.Error(err)
 	}
 	stakeAcc, _ := CustomNewAccount(testChainID, testUrl, stakePK)
-	if _, err := stakeAcc.Stake(&master.pk.PublicKey, amount); err != nil {
+	if _, err := stakeAcc.Stake(master.Addr(), amount); err != nil {
 		t.Error(err)
 	}
 }

@@ -44,7 +44,7 @@ func Register() bool {
 		return false
 	}
 
-	vals, err := generateAccounts(param.NodeIndexList)
+	vals, err := generateStakeAccounts(param.NodeIndexList)
 	if err != nil {
 		log.Errorf("failed to generate proposer, err: %v", err)
 		return false
@@ -59,7 +59,7 @@ func Register() bool {
 		} else {
 			log.Infof("stake account %s balance %v", v.Addr().Hex(), balance)
 		}
-		if _, err := v.Register(v.PublicKey, stakeAmt, v.StakeAddr.Hex()); err != nil {
+		if _, err := v.Register(v.Address, stakeAmt, v.StakeAddr.Hex()); err != nil {
 			log.Errorf("failed to register account, err: %v", err)
 			return false
 		}
@@ -71,5 +71,12 @@ func Register() bool {
 }
 
 func Stake() bool {
+	return true
+}
+
+func NodeList() bool {
+	for index, v := range config.Conf.Nodes {
+		log.Infof("node%v, validator %s, stake address %s", index, v.Address.Hex(), v.StakeAddr.Hex())
+	}
 	return true
 }

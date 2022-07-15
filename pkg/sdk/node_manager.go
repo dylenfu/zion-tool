@@ -19,15 +19,13 @@
 package sdk
 
 import (
-	"crypto/ecdsa"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	nmabi "github.com/ethereum/go-ethereum/contracts/native/go_abi/node_manager_abi"
 	nm "github.com/ethereum/go-ethereum/contracts/native/governance/node_manager"
 	"github.com/ethereum/go-ethereum/contracts/native/utils"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/rlp"
-	"math/big"
 )
 
 var (
@@ -61,13 +59,14 @@ func (c *Account) Epoch() (*nm.EpochInfo, error) {
 	return epoch, nil
 }
 
-func (c *Account) Register(validatorPubKey *ecdsa.PublicKey, amount *big.Int, desc string) (common.Hash, error) {
+func (c *Account) Register(validator common.Address, amount *big.Int, desc string) (common.Hash, error) {
 	input := &nm.CreateValidatorParam{
-		ConsensusPubkey: hexutil.Encode(crypto.CompressPubkey(validatorPubKey)),
-		ProposalAddress: c.addr,
-		Commission:      big.NewInt(0),
-		InitStake:       amount,
-		Desc:            desc,
+		ConsensusAddress: validator,
+		SignerAddress:    validator,
+		ProposalAddress:  c.addr,
+		Commission:       big.NewInt(0),
+		InitStake:        amount,
+		Desc:             desc,
 	}
 
 	payload, err := input.Encode()
@@ -78,10 +77,10 @@ func (c *Account) Register(validatorPubKey *ecdsa.PublicKey, amount *big.Int, de
 	return c.sendNodeManagerTx(payload)
 }
 
-func (c *Account) Stake(validatorPubKey *ecdsa.PublicKey, amount *big.Int) (common.Hash, error) {
+func (c *Account) Stake(validator common.Address, amount *big.Int) (common.Hash, error) {
 	input := &nm.StakeParam{
-		ConsensusPubkey: hexutil.Encode(crypto.CompressPubkey(validatorPubKey)),
-		Amount:          amount,
+		ConsensusAddress: validator,
+		Amount:           amount,
 	}
 	payload, err := input.Encode()
 	if err != nil {

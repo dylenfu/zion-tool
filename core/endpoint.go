@@ -35,6 +35,7 @@ func Endpoint() {
 	// epoch related
 	frame.Tool.RegMethod("register", Register)
 	frame.Tool.RegMethod("stake", Stake)
+	frame.Tool.RegMethod("list", NodeList)
 }
 
 func Demo() bool {

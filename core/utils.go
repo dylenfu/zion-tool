@@ -18,19 +18,20 @@ type Account struct {
 	*sdk.Account
 }
 
-func masterAccount() (*sdk.Account, error) {
-	chainID := config.Conf.ChainID
-	node := config.Conf.Nodes[0]
-	return sdk.CustomNewAccount(chainID, node.Url, node.PrivateKey)
+func masterAccount() (*Account, error) {
+	return generateStakeAccount(0)
+	//chainID := config.Conf.ChainID
+	//node := config.Conf.Nodes[0]
+	//return sdk.CustomNewAccount(chainID, node.Url, node.PrivateKey)
 }
 
-func generateAccounts(indexList []int) ([]*Account, error) {
+func generateStakeAccounts(indexList []int) ([]*Account, error) {
 	list := make([]*Account, 0)
 	for _, index := range indexList {
 		if index >= len(config.Conf.Nodes) {
 			return nil, fmt.Errorf("node index out of range")
 		}
-		acc, err := generateAccount(index)
+		acc, err := generateStakeAccount(index)
 		if err != nil {
 			return nil, err
 		}
@@ -39,7 +40,7 @@ func generateAccounts(indexList []int) ([]*Account, error) {
 	return list, nil
 }
 
-func generateAccount(index int) (*Account, error) {
+func generateStakeAccount(index int) (*Account, error) {
 	chainID := config.Conf.ChainID
 	if index >= len(config.Conf.Nodes) {
 		return nil, fmt.Errorf("node index out of range")

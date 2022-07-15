@@ -33,7 +33,7 @@ import (
 )
 
 var (
-	testUrl                = "http://127.0.0.1:22000"
+	testUrl                = "http://127.0.0.1:22008"
 	testMainNodeKey        = "4b0c9b9d685db17ac9f295cb12f9d7d2369f5bf524b3ce52ce424031cafda1ae"
 	testChainID     uint64 = 60801
 	master          *Account
