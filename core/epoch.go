@@ -59,8 +59,8 @@ func Register() bool {
 		} else {
 			log.Infof("stake account %s balance %v", v.Addr().Hex(), balance)
 		}
-		if _, err := v.Register(v.Address, stakeAmt, v.StakeAddr.Hex()); err != nil {
-			log.Errorf("failed to register account, err: %v", err)
+		if hash, err := v.Register(v.Address, stakeAmt, v.StakeAddr.Hex()); err != nil {
+			log.Errorf("failed to register account, hash %s, err: %v", hash.Hex(), err)
 			return false
 		}
 	}
